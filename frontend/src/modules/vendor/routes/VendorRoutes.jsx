@@ -1,0 +1,59 @@
+import React from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom';
+
+// Auth flow
+import VendorSplash from '../pages/VendorSplash';
+import VendorAuth from '../pages/VendorAuth';
+import VendorOtp from '../pages/VendorOtp';
+
+// Registration flow
+import ShopDetails from '../pages/ShopDetails';
+import DocumentUpload from '../pages/DocumentUpload';
+import ApprovalPending from '../pages/ApprovalPending';
+
+// Main app pages
+import Dashboard from '../pages/Dashboard';
+import OrderDetails from '../pages/OrderDetails';
+import RiderVerification from '../pages/RiderVerification';
+import Earnings from '../pages/Earnings';
+import ServiceManagement from '../pages/ServiceManagement';
+import PayoutSettings from '../pages/PayoutSettings';
+import VendorProfile from '../pages/VendorProfile';
+import VendorNotifications from '../pages/VendorNotifications';
+import VendorOrderHistory from '../pages/VendorOrderHistory';
+
+import VendorLayout from '../layouts/VendorLayout';
+
+const VendorRoutes = () => {
+  return (
+    <Routes>
+      <Route element={<VendorLayout />}>
+        {/* Auth Flow */}
+        <Route path="/splash" element={<VendorSplash />} />
+        <Route path="/auth" element={<VendorAuth />} />
+        <Route path="/otp" element={<VendorOtp />} />
+
+        {/* Registration Flow */}
+        <Route path="/register" element={<ShopDetails />} />
+        <Route path="/upload-documents" element={<DocumentUpload />} />
+        <Route path="/approval-pending" element={<ApprovalPending />} />
+
+        {/* Main App */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/order/:id" element={<OrderDetails />} />
+        <Route path="/rider-verification/:orderId" element={<RiderVerification />} />
+        <Route path="/earnings" element={<Earnings />} />
+        <Route path="/services" element={<ServiceManagement />} />
+        <Route path="/payouts" element={<PayoutSettings />} />
+        <Route path="/profile" element={<VendorProfile />} />
+        <Route path="/notifications" element={<VendorNotifications />} />
+        <Route path="/order-history" element={<VendorOrderHistory />} />
+
+        {/* Default */}
+        <Route path="*" element={<Navigate to="/vendor/splash" replace />} />
+      </Route>
+    </Routes>
+  );
+};
+
+export default VendorRoutes;

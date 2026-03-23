@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-secondary-fixed: #373f51;
+  --color-background: #faf9fe;
+  --color-outline: #787a84;
+  --color-surface-container-highest: #e0e2ed;
+  --color-on-tertiary-fixed-variant: #5a4b74;
+  --color-on-background: #2f323a;
+  --color-on-primary-fixed-variant: #354d77;
+  --color-on-surface-variant: #5c5f68;
+  --color-surface-container-high: #e6e8f1;
+  --color-on-secondary-fixed-variant: #535c6e;
+  --color-tertiary-fixed-dim: #d1beee;
+  --color-on-error: #fff7f6;
+  --color-secondary-fixed-dim: #ccd4ea;
+  --color-inverse-primary: #b4ccfe;
+  --color-surface-container: #ededf6;
+  --color-primary-fixed-dim: #a6bff0;
+  --color-primary-dim: #3b537e;
+  --color-surface-container-lowest: #ffffff;
+  --color-primary: #475f8b;
+  --color-on-tertiary-container: #51426a;
+  --color-on-secondary-container: #495264;
+  --color-secondary-dim: #4b5365;
+  --color-surface-tint: #475f8b;
+  --color-tertiary-container: #e0ccfd;
+  --color-on-surface: #2f323a;
+  --color-on-primary-container: #2b446d;
+  --color-on-tertiary-fixed: #3d2f56;
+  --color-surface-container-low: #f3f3fa;
+  --color-on-primary: #f8f8ff;
+  --color-primary-fixed: #b4ccfe;
+  --color-error-container: #fa746f;
+  --color-on-secondary: #f8f8ff;
+  --color-surface-variant: #e0e2ed;
+  --color-tertiary-dim: #5b4c75;
+  --color-error: #a83836;
+  --color-error-dim: #67040d;
+  --color-inverse-surface: #0d0e12;
+  --color-surface-dim: #d7dae4;
+  --color-inverse-on-surface: #9c9ca2;
+  --color-on-tertiary: #fef7ff;
+  --color-outline-variant: #afb2bc;
+  --color-on-primary-fixed: #153058;
+  --color-secondary-container: #dae2f9;
+  --color-secondary: #575f72;
+  --color-surface-bright: #faf9fe;
+  --color-primary-container: #b4ccfe;
+  --color-on-error-container: #6e0a12;
+  --color-secondary-fixed: #dae2f9;
+  --color-tertiary: #675881;
+  --color-tertiary-fixed: #e0ccfd;
+  --color-surface: #faf9fe;
+
+  --font-headline: "Plus Jakarta Sans", sans-serif;
+  --font-body: "Manrope", sans-serif;
+  --font-label: "Manrope", sans-serif;
+
+  --radius-default: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface antialiased font-body overflow-x-hidden w-full;
+    min-height: 100dvh;
+    touch-action: manipulation;
+  }
+  
+  #root {
+    @apply min-h-[100dvh] flex flex-col w-full;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline tracking-tighter;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
+  }
+}
+
+@layer utilities {
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+  
+  .glass-effect {
+    @apply bg-surface/70 backdrop-blur-xl border border-white/20;
+  }
+
+  .primary-gradient, .bg-primary-gradient {
+    background: linear-gradient(135deg, #153058 0%, #475f8b 100%);
+  }
+
+  .vendor-gradient {
+    background: linear-gradient(135deg, #475f8b 0%, #b4ccfe 100%);
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .tap-target-bounce-effect:active {
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
