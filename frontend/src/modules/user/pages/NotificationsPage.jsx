@@ -26,7 +26,7 @@ const NotificationsPage = () => {
         >
           <button 
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-6 opacity-60 hover:opacity-100 transition-opacity"
+            className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-widest mb-6 hover:opacity-100 transition-opacity"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
             Dismiss
@@ -64,9 +64,9 @@ const NotificationsPage = () => {
               <div className="flex-1 space-y-1">
                 <div className="flex justify-between items-start">
                   <h4 className="font-black text-[15px] text-on-surface tracking-tight leading-none">{notif.title}</h4>
-                  <span className="text-[9px] font-bold text-on-surface-variant opacity-40 uppercase tracking-widest">{notif.time}</span>
+                  <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{notif.time}</span>
                 </div>
-                <p className="text-xs font-bold text-on-surface-variant opacity-60 leading-relaxed">
+                <p className="text-xs font-bold text-on-surface-variant leading-relaxed">
                   {notif.desc}
                 </p>
               </div>
@@ -79,7 +79,7 @@ const NotificationsPage = () => {
 
         <motion.button 
           whileTap={{ scale: 0.98 }}
-          className="w-full mt-10 py-5 rounded-2xl border-2 border-outline-variant/10 text-on-surface-variant/40 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white transition-all shadow-sm"
+          className="w-full mt-10 py-5 rounded-2xl border-2 border-outline-variant/10 text-on-surface-variant font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white transition-all shadow-sm"
         >
           Mark all as read
         </motion.button>

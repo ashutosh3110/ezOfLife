@@ -26,52 +26,46 @@ const VendorBottomNav = () => {
   if (hideRoutes.some(route => location.pathname === route)) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[100] flex justify-center pb-8 pt-4 px-6 md:hidden">
-      {/* Background overlay removed from nav to prevent click blocking */}
+    <nav className="fixed bottom-0 left-0 right-0 z-[100] pb-8 pt-4 px-6 md:hidden flex justify-center pointer-events-none">
       <motion.div 
         layout
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 40 }}
-        className="flex items-center bg-white border border-slate-100 p-1 rounded-full shadow-2xl shadow-blue-900/15 gap-0.5"
+        className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[95%] max-w-md border border-black/5 gap-1"
       >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <button 
               key={item.path} 
+              id={`vendor-nav-${item.label.toLowerCase()}`}
               onClick={() => navigate(item.path)}
-              className="relative focus:outline-none touch-none no-underline"
+              className={`relative flex flex-col items-center justify-center rounded-full px-4 py-2.5 transition-colors duration-300 focus:outline-none touch-none no-underline ${
+                isActive ? 'text-on-primary' : 'text-on-surface-variant hover:bg-surface-container'
+              }`}
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <motion.div 
-                layout
-                transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                className={`relative flex items-center h-12 rounded-full overflow-hidden transition-all duration-300 ${isActive ? 'vendor-gradient text-white px-5 shadow-lg shadow-blue-900/20' : 'bg-transparent text-slate-400 opacity-60 px-4'}`}
-              >
-                <div className="flex items-center gap-2">
-                  <span 
-                    className="material-symbols-outlined text-[20px]"
-                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                  >
-                    {item.icon}
-                  </span>
-                  
-                  <AnimatePresence initial={false}>
-                    {isActive && (
-                      <motion.span 
-                        initial={{ width: 0, opacity: 0 }}
-                        animate={{ width: 'auto', opacity: 1 }}
-                        exit={{ width: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-[10px] font-black uppercase tracking-[0.1em] whitespace-nowrap overflow-hidden"
-                      >
-                        {item.label}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
+              {isActive && (
+                <motion.div 
+                  layoutId="vendorNavBubble"
+                  className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/20"
+                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                />
+              )}
+              
+              <div className="relative z-10 flex flex-col items-center gap-0.5">
+                <span 
+                  className="material-symbols-outlined text-[22px]"
+                  style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                  {item.icon}
+                </span>
+                
+                <span className="font-headline font-bold text-[9px] uppercase tracking-tighter">
+                  {item.label}
+                </span>
+              </div>
             </button>
           );
         })}

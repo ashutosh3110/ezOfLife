@@ -4,17 +4,17 @@ import { useNavigate } from 'react-router-dom';
 const VendorHeader = ({ title = "Ez of Life", showBack = false }) => {
     const navigate = useNavigate();
     return (
-        <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-slate-100 min-h-[72px]">
+        <header className="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/10 min-h-[72px]">
             <div className="flex items-center gap-3">
                 {showBack && (
-                    <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors">
+                    <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-surface-container text-on-surface-variant hover:text-primary transition-colors">
                         <span className="material-symbols-outlined text-[20px]">arrow_back</span>
                     </button>
                 )}
                 {!showBack && (
                     <div 
                         onClick={() => navigate('/vendor/profile')}
-                        className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer border border-slate-200"
+                        className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center overflow-hidden cursor-pointer border border-outline-variant/5"
                     >
                         <img 
                             className="w-full h-full object-cover" 
@@ -23,14 +23,14 @@ const VendorHeader = ({ title = "Ez of Life", showBack = false }) => {
                         />
                     </div>
                 )}
-                <div>
-                    <h1 className="text-lg font-bold tracking-tight text-[#3D5AFE] leading-none mb-1">{title}</h1>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Vendor Partner</p>
+                <div className="flex flex-col">
+                    <h1 className="text-lg font-bold tracking-tight text-primary leading-none mb-1">{title}</h1>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Vendor Partner</p>
                 </div>
             </div>
             <button 
                 onClick={() => navigate('/vendor/notifications')}
-                className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-container text-on-surface-variant hover:text-primary transition-colors"
             >
                 <span className="material-symbols-outlined text-[22px]">notifications</span>
             </button>

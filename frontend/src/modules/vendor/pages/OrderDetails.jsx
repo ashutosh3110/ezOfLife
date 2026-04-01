@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const OrderDetails = () => {
     const navigate = useNavigate();
@@ -21,7 +21,7 @@ const OrderDetails = () => {
         <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
-            className="bg-surface font-body text-on-surface min-h-[100dvh] flex flex-col overflow-x-hidden"
+            className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden"
         >
             {/* Header */}
             <header className="bg-surface/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant/5">

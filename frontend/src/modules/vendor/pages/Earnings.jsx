@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import VendorHeader from '../components/VendorHeader';
 
 const Earnings = () => {
     const navigate = useNavigate();
@@ -18,32 +19,29 @@ const Earnings = () => {
         <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-[#F8FAFC] text-slate-800 min-h-screen pb-32 font-sans"
+            className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
-            <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4 border-b border-slate-100">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-[#3D5AFE] transition-colors">
-                        <span className="material-symbols-outlined">arrow_back</span>
-                    </button>
-                    <h1 className="text-lg font-bold tracking-tight">Earnings</h1>
-                </div>
-                <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200">
+            <VendorHeader title="Earnings" showBack={true} />
+            
+            {/* Filter Tabs - Custom for this page */}
+            <div className="flex justify-center mt-6">
+                <div className="flex bg-surface-container p-1 rounded-full border border-outline-variant/10">
                     {['Daily', 'Weekly', 'Monthly'].map((filter) => (
                         <button 
                             key={filter}
                             onClick={() => setPerformanceFilter(filter)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${performanceFilter === filter ? 'bg-white text-[#3D5AFE] shadow-sm' : 'text-slate-400'}`}
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all ${performanceFilter === filter ? 'bg-white text-primary shadow-sm' : 'text-on-surface-variant opacity-60'}`}
                         >
                             {filter}
                         </button>
                     ))}
                 </div>
-            </header>
+            </div>
 
             <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
                 {/* Balance Cards */}
                 <div className="grid grid-cols-1 gap-4">
-                    <div className="bg-[#3D5AFE] p-8 rounded-[2.5rem] text-white shadow-xl shadow-blue-400/20 relative overflow-hidden">
+                    <div className="vendor-gradient p-8 rounded-[2.5rem] text-white shadow-xl shadow-primary/20 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                         <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Total Earnings</p>
                         <h2 className="text-4xl font-bold tracking-tighter">₹12,840.40</h2>
@@ -59,7 +57,7 @@ const Earnings = () => {
                             </div>
                             <button 
                                 onClick={() => navigate('/vendor/payouts')}
-                                className="w-full py-4 bg-white text-[#3D5AFE] rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                className="w-full py-4 bg-white text-primary rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
                             >
                                 Request Payout
                             </button>
@@ -74,7 +72,7 @@ const Earnings = () => {
                             <h3 className="text-base font-bold text-slate-800 tracking-tight">Performance Trend</h3>
                             <p className="text-xs text-slate-400 font-medium font-body">Revenue growth analysis</p>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[#3D5AFE]">
+                        <div className="flex items-center gap-1.5 text-primary">
                             <span className="material-symbols-outlined text-[18px]">trending_up</span>
                             <span className="text-lg font-black tracking-tight">+18.2%</span>
                         </div>
@@ -87,10 +85,10 @@ const Earnings = () => {
                                         initial={{ height: 0 }}
                                         animate={{ height: `${h}%` }}
                                         transition={{ duration: 1, delay: i * 0.05 }}
-                                        className={`absolute bottom-0 w-full rounded-full transition-all duration-500 ${i === currentData.activeIdx ? 'vendor-gradient shadow-lg shadow-blue-400/30' : 'bg-[#3D5AFE]/5 group-hover:bg-[#3D5AFE]/10'}`}
+                                        className={`absolute bottom-0 w-full rounded-full transition-all duration-500 ${i === currentData.activeIdx ? 'vendor-gradient shadow-lg shadow-primary/30' : 'bg-primary/5 group-hover:bg-primary/10'}`}
                                     />
                                 </div>
-                                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${i === currentData.activeIdx ? 'text-[#3D5AFE]' : 'text-slate-300'}`}>
+                                <span className={`text-[9px] font-black uppercase tracking-widest transition-colors duration-300 ${i === currentData.activeIdx ? 'text-primary' : 'text-on-surface-variant/40'}`}>
                                     {currentData.labels[i]}
                                 </span>
                             </div>

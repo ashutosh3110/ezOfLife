@@ -43,7 +43,7 @@ const HomePage = () => {
             variants={cardVariants}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/user/tracking')}
-            className="mb-8 bg-primary/5 border border-primary/20 p-4 rounded-3xl flex items-center justify-between cursor-pointer group"
+            className="mb-8 bg-white border border-outline-variant/10 p-4 rounded-3xl flex items-center justify-between cursor-pointer group shadow-sm shadow-primary/5"
           >
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-lg shadow-primary/20">
@@ -85,7 +85,7 @@ const HomePage = () => {
             >
               <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-12 -mt-12 blur-3xl"></div>
               <div className="relative z-10">
-                <span className="text-on-primary/70 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-2 block">Limited Era</span>
+                <span className="text-on-primary text-[10px] font-extrabold uppercase tracking-[0.2em] mb-2 block">Limited Era</span>
                 <h2 className="text-3xl font-black text-on-primary mb-5 leading-[1.1] tracking-tight">30% Off Your<br/>First Order</h2>
                 <motion.button 
                   whileTap={{ scale: 0.95 }}
@@ -162,7 +162,7 @@ const HomePage = () => {
                   </div>
                   <div>
                     <h4 className="font-headline font-black text-[15px] leading-none mb-1">{service.name}</h4>
-                    <p className="text-[11px] text-on-surface-variant font-bold opacity-60 leading-none truncate">{service.description}</p>
+                    <p className="text-[11px] text-on-surface-variant font-bold leading-none truncate">{service.description}</p>
                   </div>
                 </motion.div>
               ))}
@@ -192,7 +192,7 @@ const HomePage = () => {
                 </div>
                 <div>
                   <h3 className="font-black text-xl tracking-tight">Express Pickup</h3>
-                  <p className="text-on-surface-variant text-xs font-bold opacity-60 uppercase tracking-widest">Under 60 mins</p>
+                  <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest">Under 60 mins</p>
                 </div>
               </div>
               <motion.button 

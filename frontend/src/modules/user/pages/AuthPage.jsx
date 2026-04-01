@@ -196,24 +196,7 @@ const AuthPage = () => {
                   </div>
                 )}
 
-                {/* Shared Social Options */}
-                <motion.div variants={itemVariants} className="mt-10">
-                  <div className="flex items-center gap-4 mb-8">
-                    <div className="h-[1px] flex-grow bg-outline-variant/15"></div>
-                    <span className="font-label text-[10px] text-outline-variant font-black uppercase tracking-widest shrink-0 opacity-60">Authentication</span>
-                    <div className="h-[1px] flex-grow bg-outline-variant/15"></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2.5 py-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-all active:scale-95">
-                      <img alt="Google" className="w-5 h-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7j5MlFmc8BxUbSQFq-aydxt-ISYovUwP9-xoBOjbre67puPbnocH5_VXn1ui6DbLaiImyfMARsutY9rX6rsAytDK4a6Zbfw0DeftbtrvzQbtXnnV-eiVbPfZBAsP6tBj4dcY2j9uXprshQf8xl5qLFK1IV0ufIObHAZytkuJkMh6iCS2jROnKz5fzah8olFb2SXTl57T9I-09ghlvUfZbut8OjlF90VC4WjNldWDdy2JmCKvYYWzwCvfIUXLnymXlRlpMphgkvmA" />
-                      <span className="font-black text-[11px] tracking-widest uppercase focus:outline-none">Google</span>
-                    </button>
-                    <button className="flex items-center justify-center gap-2.5 py-4 bg-surface-container-low rounded-2xl hover:bg-surface-container transition-all active:scale-95">
-                      <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>ios</span>
-                      <span className="font-black text-[11px] tracking-widest uppercase focus:outline-none">Apple</span>
-                    </button>
-                  </div>
-                </motion.div>
+
               </motion.div>
             </AnimatePresence>
           </motion.div>

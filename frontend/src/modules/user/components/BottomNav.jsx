@@ -20,7 +20,7 @@ const BottomNav = () => {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         // Removed exit animation to avoid flashes during layout transitions
-        className="bg-surface/90 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_20px_40px_rgba(47,50,58,0.12)] pointer-events-auto flex justify-around items-center w-[90%] max-w-md border border-outline-variant/10"
+        className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[90%] max-w-md border border-black/5"
       >
         {navItems.map((item) => {
           const isActive = currentPath === item.path;
