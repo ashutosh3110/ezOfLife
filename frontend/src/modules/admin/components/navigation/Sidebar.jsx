@@ -23,7 +23,8 @@ import {
     Star,
     Clock,
     HelpCircle,
-    Home
+    Home,
+    Bike
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,6 +38,8 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             group: 'Operations', items: [
                 { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
                 { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
+                { icon: Bike, label: 'Fleet Management', path: '/admin/riders' },
+                { icon: HelpCircle, label: 'Help Desk', path: '/admin/help-desk' },
             ]
         },
         {
@@ -49,12 +52,14 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
         {
             group: 'Financials', items: [
                 { icon: CreditCard, label: 'Payouts', path: '/admin/payouts' },
+                { icon: Tags, label: 'Pricing Policy', path: '/admin/pricing' },
                 { icon: TrendingUp, label: 'Analytics', path: '/admin/analytics' },
             ]
         },
         {
-            group: 'Catalog', items: [
+            group: 'Core Assets', items: [
                 { icon: Package, label: 'Services', path: '/admin/services' },
+                { icon: ShieldAlert, label: 'Dispute Center', path: '/admin/dispute-center' },
             ]
         },
         {

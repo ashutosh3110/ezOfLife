@@ -45,22 +45,33 @@ const Earnings = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                         <p className="text-[11px] font-black uppercase tracking-[0.2em] opacity-60 mb-2">Total Earnings</p>
                         <h2 className="text-4xl font-bold tracking-tighter">₹12,840.40</h2>
-                        <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-4">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mb-1">Last Payout</p>
-                                    <p className="text-sm font-bold">Mar 23 · ₹2,450</p>
+                        <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-60">
+                                    <span>Gross Revenue</span>
+                                    <span className="tabular-nums italic text-slate-200">₹15,106.35</span>
                                 </div>
-                                <button onClick={() => navigate('/vendor/payouts')} className="px-5 py-2.5 bg-white/10 text-white rounded-full text-[10px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/10 hover:bg-white/20 transition-all">
-                                    History
+                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-rose-300">
+                                    <span>Platform Fee (15%)</span>
+                                    <span className="tabular-nums">-₹2,265.95</span>
+                                </div>
+                                <div className="flex justify-between text-[11px] font-black uppercase tracking-[0.2em] pt-2 border-t border-white/5">
+                                    <span className="text-emerald-300">Net Shop Yield</span>
+                                    <span className="tabular-nums text-white">₹12,840.40</span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex flex-col gap-3">
+                                <button 
+                                    onClick={() => navigate('/vendor/payouts')}
+                                    className="w-full py-4 bg-white text-primary rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                >
+                                    Instant Settlement
+                                </button>
+                                <button className="w-full py-3 bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/5">
+                                    Download Tax Invoice (GST)
                                 </button>
                             </div>
-                            <button 
-                                onClick={() => navigate('/vendor/payouts')}
-                                className="w-full py-4 bg-white text-primary rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                            >
-                                Request Payout
-                            </button>
                         </div>
                     </div>
                 </div>

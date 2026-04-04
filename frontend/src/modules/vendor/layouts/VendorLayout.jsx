@@ -11,7 +11,10 @@ const VendorLayout = () => {
     '/vendor/otp',
     '/vendor/register', 
     '/vendor/upload-documents', 
-    '/vendor/approval-pending'
+    '/vendor/approval-pending',
+    '/vendor/walk-in',
+    '/vendor/promotions',
+    '/vendor/fulfillment'
   ];
   
   const isOrderDetails = location.pathname.includes('/vendor/order/');
@@ -20,7 +23,7 @@ const VendorLayout = () => {
   const showNav = !noNavPaths.some(path => location.pathname === path) && !isOrderDetails && !isRiderVerification;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8FAFC]">
+    <div className="flex flex-col min-h-screen bg-background">
       <main className="flex-1 w-full relative">
         <Outlet />
       </main>

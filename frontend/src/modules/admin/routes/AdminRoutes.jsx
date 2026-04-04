@@ -14,6 +14,11 @@ import Analytics from '../pages/Analytics';
 import AdminLogin from '../pages/AdminLogin';
 import AdminOrderDetail from '../pages/AdminOrderDetail';
 import AdminVendorDetail from '../pages/AdminVendorDetail';
+import PricingConfig from '../pages/PricingConfig';
+import HelpDesk from '../pages/HelpDesk';
+import DisputeCenter from '../pages/DisputeCenter';
+import Riders from '../pages/Riders';
+import B2BLeads from '../pages/B2BLeads';
 
 // Simple Guard Component
 const AdminGuard = ({ children }) => {
@@ -49,9 +54,15 @@ const AdminRoutes = () => {
         <Route path="/vendors/approvals" element={<OnboardingApprovals />} />
         <Route path="/payouts" element={<Payouts />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/riders" element={<Riders />} />
+        <Route path="/pricing" element={<PricingConfig />} />
+        <Route path="/help-desk" element={<HelpDesk />} />
+        <Route path="/dispute-center" element={<DisputeCenter />} />
         <Route path="/users" element={<Users />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/b2b-leads" element={<B2BLeads />} />
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+
       </Route>
 
       {/* Default Redirect */}

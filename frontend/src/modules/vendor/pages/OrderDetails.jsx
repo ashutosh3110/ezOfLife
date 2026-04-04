@@ -1,21 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const OrderDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const addNotification = useNotificationStore((state) => state.addNotification);
+
     const orderId = id || 'EZ-8821';
 
     const [showReport, setShowReport] = useState(false);
     const [reportReason, setReportReason] = useState('');
 
     const orderStages = [
-        { id: 1, label: 'Picked Up', icon: 'local_shipping', status: 'completed' },
-        { id: 2, label: 'Processing', icon: 'local_laundry_service', status: 'active', color: 'primary' },
-        { id: 3, label: 'Ready', icon: 'check_circle', status: 'pending' },
-        { id: 4, label: 'Delivered', icon: 'house', status: 'pending' },
+        { id: 1, label: 'Pickup', icon: 'photo_camera', status: 'completed' },
+        { id: 2, label: 'Intake', icon: 'inventory_2', status: 'active', color: 'primary' },
+        { id: 3, label: 'Processing', icon: 'local_laundry_service', status: 'pending' },
+        { id: 4, label: 'Handover', icon: 'verified_user', status: 'pending' },
     ];
+
 
     return (
         <motion.div 
@@ -107,6 +111,7 @@ const OrderDetails = () => {
                         {orderStages.map((stage, idx) => (
                             <React.Fragment key={stage.id}>
                                 <div className="flex flex-col items-center gap-2 z-10">
+                                    <p className="text-[6px] font-black text-primary uppercase tracking-widest opacity-40 mb-[-4px]">Step {stage.id} of 4</p>
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-all duration-500 ${
                                         stage.status === 'completed' ? 'vendor-gradient text-white' : 
                                         stage.status === 'active' ? 'bg-primary/10 text-primary border-2 border-primary' : 
@@ -116,6 +121,7 @@ const OrderDetails = () => {
                                             {stage.icon}
                                         </span>
                                     </div>
+
                                     <p className={`font-black text-[9px] uppercase tracking-tighter ${stage.status === 'pending' ? 'text-on-surface-variant opacity-30' : 'text-on-surface'}`}>
                                         {stage.label}
                                     </p>
@@ -210,12 +216,17 @@ const OrderDetails = () => {
                     </motion.button>
                     <motion.button 
                         whileTap={{ scale: 0.98 }}
-                        onClick={() => navigate(`/vendor/rider-verification/${orderId}`)}
+                        onClick={() => {
+                            addNotification('processing', 'Cleaning Complete', 'Your order #EZ-8821 has been processed and is being packed.', 'user');
+                            addNotification('ready', 'Order Ready #EZ-8821', 'Pick up ready at Heritage Cleaners for final delivery.', 'rider');
+                            navigate(`/vendor/rider-verification/${orderId}`);
+                        }}
                         className="flex-1 h-14 rounded-2xl vendor-gradient text-white font-black text-sm uppercase tracking-[0.15em] shadow-lg shadow-primary/20 flex items-center justify-center gap-3"
                     >
                         Mark as Ready
                         <span className="material-symbols-outlined text-lg">rocket_launch</span>
                     </motion.button>
+
                 </div>
             </div>
         </motion.div>

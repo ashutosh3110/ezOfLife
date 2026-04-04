@@ -37,32 +37,22 @@ const CareersPage = () => {
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32">
-            <header className="px-6 pt-16 mb-8 relative overflow-hidden">
+            <header className="px-6 pt-4 flex items-center mb-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
                 
-                <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => navigate(-1)}
-                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-on-surface mb-8 border border-outline-variant/10"
-                >
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </motion.button>
-
-                <motion.h1 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-4xl font-black tracking-tighter leading-none italic mb-2"
-                >
-                    Careers
-                </motion.h1>
-                <motion.p 
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-on-surface-variant text-xs font-bold uppercase tracking-widest opacity-60"
-                >
-                    The Labor Exchange Dashboard
-                </motion.p>
+                <div className="flex items-center gap-4 relative z-10">
+                    <motion.button 
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => navigate(-1)}
+                        className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-on-surface border border-outline-variant/10"
+                    >
+                        <span className="material-symbols-outlined text-xl">arrow_back</span>
+                    </motion.button>
+                    <div>
+                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Careers</h1>
+                        <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Join the Ecosystem</p>
+                    </div>
+                </div>
             </header>
 
             <main className="px-6 max-w-2xl mx-auto">

@@ -39,17 +39,9 @@ const SupplierRateCard = () => {
     };
 
     return (
-        <div className="bg-background text-on-surface min-h-screen">
-            <header className="px-6 pt-16 mb-10 sticky top-0 bg-background/80 backdrop-blur-md z-20 pb-4 border-b border-outline-variant/10">
-                <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => navigate(-1)}
-                    className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-on-surface mb-8 border border-outline-variant/10 shadow-sm"
-                >
-                    <span className="material-symbols-outlined text-sm">arrow_back</span>
-                </motion.button>
-                
-                <h1 className="text-3xl font-black tracking-tighter italic uppercase">Batch Rate Card</h1>
+        <div className="bg-background text-on-surface min-h-screen pb-40">
+            <header className="px-6 pt-4 mb-4 z-20 pb-4">
+                <h1 className="text-2xl font-black tracking-tighter italic uppercase leading-none">Batch Rate Card</h1>
                 <p className="text-[10px] font-black text-on-surface/40 uppercase tracking-widest mt-1 opacity-60">Set Your Base Rates ( $R_b$ )</p>
             </header>
 

@@ -1,9 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const UserHeader = () => {
+
   const navigate = useNavigate();
+  
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
   
   return (
     <motion.header 
@@ -31,10 +35,14 @@ const UserHeader = () => {
       <motion.button 
         whileTap={{ scale: 0.9 }}
         onClick={() => navigate('/user/notifications')}
-        className="w-10 h-10 flex items-center justify-center text-on-surface bg-surface-container rounded-full"
+        className="w-10 h-10 flex items-center justify-center text-on-surface bg-surface-container rounded-full relative"
       >
         <span className="material-symbols-outlined text-2xl">notifications</span>
+        {unreadCount > 0 && (
+          <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+        )}
       </motion.button>
+
     </motion.header>
   );
 };

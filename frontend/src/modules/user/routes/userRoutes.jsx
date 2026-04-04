@@ -25,8 +25,15 @@ import NotificationsPage from '../pages/NotificationsPage';
 import AllServicesPage from '../pages/AllServicesPage';
 import SearchResultsPage from '../pages/SearchResultsPage';
 import ServiceInfoPage from '../pages/ServiceInfoPage';
+import TermsConditionsPage from '../pages/TermsConditionsPage';
 import CareersPage from '../pages/CareersPage';
 import FAQPage from '../pages/FAQPage';
+import ChatPage from '../pages/ChatPage';
+import PartnershipInquiryPage from '../pages/PartnershipInquiryPage';
+import AdvertiseWithUsPage from '../pages/AdvertiseWithUsPage';
+import WalletPage from '../pages/WalletPage';
+import RegisterAsVendorPage from '../pages/RegisterAsVendorPage';
+
 
 import UserLayout from '../layouts/UserLayout';
 
@@ -40,6 +47,9 @@ const UserRoutes = () => {
         <Route path="/home" element={<HomePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/confirmation" element={<OrderConfirmationPage />} />
+        <Route path="/chat/:orderId" element={<ChatPage />} />
+        <Route path="/partnerships" element={<PartnershipInquiryPage />} />
+        <Route path="/advertise" element={<AdvertiseWithUsPage />} />
         <Route path="/success" element={<SuccessPage />} />
         <Route path="/tracking" element={<OrderTrackingPage />} />
         <Route path="/verification" element={<DeliveryVerificationPage />} />
@@ -51,6 +61,7 @@ const UserRoutes = () => {
         <Route path="/profile/create" element={<ProfileCreationPage />} />
         <Route path="/profile/addresses" element={<AddressesPage />} />
         <Route path="/profile/payment" element={<PaymentMethodsPage />} />
+        <Route path="/profile/wallet" element={<WalletPage />} />
         <Route path="/support" element={<HelpCenterPage />} />
         <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/review" element={<RateAndReviewPage />} />
@@ -60,8 +71,11 @@ const UserRoutes = () => {
         <Route path="/service-info" element={<ServiceInfoPage />} />
         <Route path="/careers" element={<CareersPage />} />
         <Route path="/faq" element={<FAQPage />} />
+        <Route path="/terms" element={<TermsConditionsPage />} />
+        <Route path="/become-vendor" element={<RegisterAsVendorPage />} />
         <Route path="/more" element={<MoreMenuPage />} />
       </Route>
+
       {/* Fallback to splash */}
       <Route path="*" element={<Navigate to="/user/" replace />} />
     </Routes>

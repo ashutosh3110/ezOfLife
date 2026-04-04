@@ -80,47 +80,103 @@ export default function Analytics() {
           </ChartPanel>
         </div>
 
-        {/* Platform Performance */}
-        <div className="bg-white p-6 border border-slate-200 rounded-sm flex flex-col gap-6">
-           <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-              <div className="flex items-center gap-2">
-                 <Activity size={14} className="text-slate-900" />
-                 <h3 className="text-[10px] font-bold text-slate-900 uppercase tracking-widest leading-none">Operational Pulse</h3>
-              </div>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 border border-slate-100">Live Metrics</span>
-           </div>
-           
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="flex flex-col gap-1">
-                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Completion Rate</span>
-                 <div className="flex items-end gap-2">
-                    <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none tracking-tighter">99.8%</span>
-                    <span className="text-[9px] text-emerald-500 font-bold mb-0.5">↗ +0.02</span>
+        {/* Platform Performance Layer (Phase 3 Requirement) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white p-6 border border-slate-200 rounded-sm flex flex-col gap-8 shadow-sm">
+               <div className="flex items-center justify-between border-b border-slate-50 pb-4">
+                  <div className="flex items-center gap-2">
+                     <Activity size={14} className="text-slate-900" />
+                     <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] leading-none">Operational Global Pulse</h3>
+                  </div>
+                  <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/5 px-2 py-0.5 border border-emerald-500/10">MISSION CRITICAL</span>
+               </div>
+               
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Fulfillment KPI</span>
+                     <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">99.8%</span>
+                        <span className="text-[9px] text-emerald-500 font-bold mb-0.5">↗ +0.02</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1 text-primary">
+                     <span className="text-[8px] font-black text-primary uppercase tracking-widest opacity-40">Network Latency</span>
+                     <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">42ms</span>
+                        <span className="text-[9px] text-slate-300 font-bold mb-0.5 uppercase">STABLE</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1 text-rose-500">
+                     <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest opacity-40">System Faults</span>
+                     <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">00</span>
+                        <span className="text-[9px] text-emerald-500 font-bold mb-0.5 uppercase tracking-tighter">OPTIMAL</span>
+                     </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Avg Order Value</span>
+                     <div className="flex items-end gap-2">
+                        <span className="text-2xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">₹482</span>
+                        <span className="text-[9px] text-blue-500 font-bold mb-0.5 italic">↗ +12%</span>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-50">
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Active Riders</span>
+                     <span className="text-xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">142</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Active Vendors</span>
+                     <span className="text-xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">32</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Tasks / Rider</span>
+                     <span className="text-xl font-black text-slate-900 tabular-nums leading-none tracking-tighter italic">14.2</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">Handshake KPI</span>
+                     <span className="text-xl font-black text-emerald-500 tabular-nums leading-none tracking-tighter italic">98%</span>
+                  </div>
+               </div>
+            </div>
+
+            <ChartPanel title="Market Segmentation" subtitle="Category yield breakdown" height={325}>
+               <div className="h-full w-full p-2">
+                 <ResponsiveContainer width="100%" height="100%">
+                   <PieChart>
+                     <Pie
+                       data={[
+                         { name: 'Laundry', value: 400 },
+                         { name: 'Dry Clean', value: 300 },
+                         { name: 'Ironing', value: 300 },
+                         { name: 'Premium', value: 200 },
+                       ]}
+                       innerRadius={60}
+                       outerRadius={80}
+                       paddingAngle={5}
+                       dataKey="value"
+                     >
+                       {[1, 2, 3, 4].map((entry, index) => (
+                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                       ))}
+                     </Pie>
+                     <Tooltip />
+                   </PieChart>
+                 </ResponsiveContainer>
+                 <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-[-20px] pb-4">
+                    {['Laundry', 'Dry Clean', 'Ironing', 'Premium'].map((cat, i) => (
+                        <div key={cat} className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }}></div>
+                            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{cat}</span>
+                        </div>
+                    ))}
                  </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Avg Turnaround</span>
-                 <div className="flex items-end gap-2">
-                    <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none tracking-tighter">14s</span>
-                    <span className="text-[9px] text-slate-300 font-bold mb-0.5">STABLE</span>
-                 </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Disrupted Orders</span>
-                 <div className="flex items-end gap-2">
-                    <span className="text-2xl font-bold text-rose-500 tabular-nums leading-none tracking-tighter">00</span>
-                    <span className="text-[9px] text-emerald-500 font-bold mb-0.5">OPTIMAL</span>
-                 </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Active Customers</span>
-                 <div className="flex items-end gap-2">
-                    <span className="text-2xl font-bold text-slate-900 tabular-nums leading-none tracking-tighter">1.2K</span>
-                    <span className="text-[9px] text-blue-500 font-bold mb-0.5">↗ +142</span>
-                 </div>
-              </div>
-           </div>
+               </div>
+            </ChartPanel>
         </div>
+
       </div>
     </div>
   );

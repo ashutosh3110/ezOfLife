@@ -1,10 +1,37 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import UserHeader from '../components/UserHeader';
 
 const DeliveryVerificationPage = () => {
   const navigate = useNavigate();
+
+  const [otp, setOtp] = React.useState(['', '', '', '']);
+  const otpRefs = [React.useRef(null), React.useRef(null), React.useRef(null), React.useRef(null)];
+
+  const handleOtpChange = (index, value) => {
+    if (isNaN(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
+
+    // Move to next input
+    if (value && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+
+    // Auto-verify when complete (BRD M3 Requirement)
+    if (newOtp.every(digit => digit !== '')) {
+      setTimeout(() => {
+        navigate('/user/payment', { state: { amount: 1248 } });
+      }, 800);
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -23,9 +50,8 @@ const DeliveryVerificationPage = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="bg-background text-on-background min-h-[100dvh] flex flex-col"
+      className="bg-background text-on-background min-h-[100dvh] flex flex-col font-body"
     >
-
       <main className="flex-1 pt-28 pb-32 px-6 max-w-5xl mx-auto w-full">
         {/* Editorial Header Section */}
         <motion.section 
@@ -46,37 +72,41 @@ const DeliveryVerificationPage = () => {
           animate="visible"
           className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10"
         >
-          {/* Pickup Card */}
+          {/* Pickup Card (Phase 1 M2 Requirement) */}
           <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 flex flex-col gap-6 shadow-sm border border-outline-variant/5">
             <div className="flex justify-between items-center">
-              <span className="font-headline font-black text-xl text-on-surface tracking-tight">Pickup State</span>
-              <span className="px-4 py-1.5 bg-surface-container-high text-on-surface-variant text-[10px] font-black uppercase tracking-widest rounded-full">Before</span>
+              <span className="font-headline font-black text-xl text-on-surface tracking-tight">Pickup Photos</span>
+              <span className="px-4 py-1.5 bg-surface-container-high text-on-surface-variant text-[10px] font-black uppercase tracking-widest rounded-full">Step 1 of 4</span>
             </div>
-            <div className="relative aspect-video rounded-3xl overflow-hidden shadow-inner bg-surface-container">
-              <img alt="Pickup" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASDaPagYSppSpfoedCnxsq-FWr-tLMA3GzGR2lTumMJyLoXwHrQZcZplwfLhDsX390uERkIE20ULk4Ec6ifIduzc2PplK-uARST9JsymUjmuBolkal2si-Cqx4IguCZTPOhej6DzoDnMR9zrVrqPswcQuWwh9KM6D5hpRUtN3FOVc_XqDq4-K_k6Du6Um0a-VzKHD8iHlJ79hbs1IgU_CEL_q9sIxcCvfQIV-y98H7D_MH5QaZgEPCfPgOzpqVybbIy_5WRWBpjSE" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-              <div className="absolute bottom-4 left-5 flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-sm">schedule</span>
-                <span className="text-[10px] font-black uppercase tracking-widest">May 12, 09:15 AM</span>
+            
+            <div className="space-y-4">
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-inner bg-surface-container">
+                <img alt="Main Pickup" className="w-full h-full object-cover" src="https://images.unsplash.com/photo-1545173168-9f1947eebb7f?q=80&w=2071&auto=format&fit=crop" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+              </div>
+              
+              <div className="grid grid-cols-4 gap-2">
+                {[1,2,3,4].map(i => (
+                  <div key={i} className="aspect-square rounded-xl overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:border-primary transition-all">
+                    <img alt={`Pickup ${i}`} className="w-full h-full object-cover opacity-80" src={`https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=200&auto=format&fit=crop&sig=${i}`} />
+                  </div>
+                ))}
               </div>
             </div>
-            <p className="text-xs font-bold text-on-surface-variant leading-relaxed opacity-70">Official pickup record captured by your rider during initial collection.</p>
+            
+            <p className="text-xs font-bold text-on-surface-variant leading-relaxed opacity-70">Review the photos taken during pickup to verify item count and condition.</p>
           </motion.div>
 
-          {/* Delivery Card */}
+          {/* Delivery State Card */}
           <motion.div variants={itemVariants} className="bg-primary/5 rounded-[2.5rem] p-8 flex flex-col gap-6 shadow-sm border-2 border-primary/10">
             <div className="flex justify-between items-center">
               <span className="font-headline font-black text-xl text-primary tracking-tight">Delivery State</span>
-              <span className="px-4 py-1.5 bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-primary/20">After</span>
+              <span className="px-4 py-1.5 bg-primary text-on-primary text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-primary/20">Final</span>
             </div>
             <div className="relative aspect-video rounded-3xl overflow-hidden group cursor-pointer shadow-lg">
-              <img alt="Delivery" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAag27rItEwf32cdPygzlEcqV8TV93VByf0J8LSioevGETHxyeIyF15K5lBh3x8EuJTUJGMnodoC3MS2QRviP5POf4njG006mKv8W4OxHp0l8wFDToym12dnoz1YdUnG5XPVVD9vEp2vDaNMebA4R5ZtkPlxAzWG58vIHXih5ZlDj3XPl5izh9TVAq4d4dBNmeXtfBc6J0G9K_sfmk7nhuLKqZYycXp0w4j7bSfTX9fC7NULfFsn-06oLbAJwtu_1t5DiKuJSOCDHo" />
+              <img alt="Delivery" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" src="https://images.unsplash.com/photo-1521334885634-940428987349?q=80&w=2070&auto=format&fit=crop" />
               <div className="absolute inset-0 bg-primary/20 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="material-symbols-outlined text-white text-5xl">zoom_in</span>
-              </div>
-              <div className="absolute bottom-4 left-5 flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>done_all</span>
-                <span className="text-[10px] font-black uppercase tracking-widest">Delivered Just Now</span>
               </div>
             </div>
             <p className="text-xs font-bold text-on-surface-variant leading-relaxed opacity-70">
@@ -120,23 +150,26 @@ const DeliveryVerificationPage = () => {
           animate="visible"
           className="max-w-md mx-auto text-center py-6"
         >
-          <h4 className="font-headline font-black text-2xl tracking-tighter mb-3">Final Confirmation</h4>
+          <h4 className="font-headline font-black text-2xl tracking-tighter mb-3">Final Confirmation OTP</h4>
           <p className="text-xs font-bold text-on-surface-variant opacity-60 px-8 leading-relaxed mb-10">
-            Enter the 4-digit verification code sent to your registered mobile number.
+            Review your clothes, then provide the OTP to the rider to complete the delivery.
           </p>
           
           <div className="flex justify-center gap-4 mb-12">
-            {[4, 8, '', ''].map((val, i) => (
+            {otp.map((val, i) => (
               <motion.input 
                 key={i}
+                ref={otpRefs[i]}
                 whileFocus={{ scale: 1.05 }}
                 className={`w-14 h-18 text-center text-3xl font-black rounded-2xl bg-white border-2 transition-all ${
                   val ? 'border-primary text-primary' : 'border-outline-variant/20 text-on-surface-variant'
                 } focus:border-primary focus:ring-0`}
                 maxLength="1"
-                type="text"
-                defaultValue={val}
-                placeholder={val ? undefined : '•'}
+                type="tel"
+                value={val}
+                onChange={(e) => handleOtpChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(i, e)}
+                placeholder="•"
               />
             ))}
           </div>
@@ -144,11 +177,11 @@ const DeliveryVerificationPage = () => {
           <motion.button 
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/user/success-feedback')}
+            onClick={() => navigate('/user/payment')}
             className="w-full py-6 bg-primary-gradient text-on-primary font-headline font-black text-xl rounded-2xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest"
           >
-            Verify & Pay
-            <span className="material-symbols-outlined text-2xl">payments</span>
+            Confirm Delivery
+            <span className="material-symbols-outlined text-2xl">local_shipping</span>
           </motion.button>
           
           <button className="mt-8 text-primary font-black text-[10px] uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity">

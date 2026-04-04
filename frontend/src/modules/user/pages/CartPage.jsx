@@ -7,51 +7,39 @@ import BottomNav from '../components/BottomNav';
 const CartPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedService = location.state?.selectedService;
-  const [promoCode, setPromoCode] = useState('');
-  const [isPromoApplied, setIsPromoApplied] = useState(false);
-  const [promoError, setPromoError] = useState('');
-
-  const [addresses] = useState([
-    { id: 1, type: 'Home', address: '249 Editorial Ave, Suite 4B, Pristine Heights, NY 10012', isDefault: true },
-    { id: 2, type: 'Office', address: '88 Creative Plaza, 12th Floor, Metro Central, NY 10001', isDefault: false }
-  ]);
-  const [selectedAddress, setSelectedAddress] = useState(addresses[0]);
-  const [showAddressPicker, setShowAddressPicker] = useState(false);
-
-  // Initialize cart with the selected service or a default if none
-  const defaultItems = [
-    { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: 99.00 }
-  ];
-
-  const [cartItems, setCartItems] = useState(selectedService ? [selectedService] : defaultItems);
-  
-  // Track quantities and billing units
   const [quantities, setQuantities] = useState(() => {
-    const q = {};
-    cartItems.forEach(item => {
-      // Use initialQuantity if provided from ServiceInfo, otherwise default
-      const initial = (item.id === selectedService?.id && selectedService.initialQuantity) 
-        ? selectedService.initialQuantity 
-        : (item.id.includes('wash') || item.id.includes('carpet')) ? 5 : 1;
-      q[item.id] = initial;
-    });
+    // Priority 1: From localStorage (multi-select)
+    const saved = localStorage.getItem('cart_quantities');
+    const q = saved ? JSON.parse(saved) : {};
+    
+    // Priority 2: From direct service info (single navigate)
+    if (selectedService && !q[selectedService.id]) {
+      q[selectedService.id] = selectedService.initialQuantity || 1;
+    }
     return q;
   });
+
+  const cartItems = MASTER_SERVICES.filter(s => quantities[s.id] > 0);
+
 
   const [billingUnits, setBillingUnits] = useState(() => {
     const u = {};
     cartItems.forEach(item => {
-      // Use initialUnit if provided from ServiceInfo, otherwise default
-      const initial = (item.id === selectedService?.id && selectedService.initialUnit)
-        ? selectedService.initialUnit
-        : (item.id.includes('wash') || item.id.includes('carpet')) ? 'kg' : 'pc';
-      u[item.id] = initial;
+      u[item.id] = item.unit || (item.id.includes('wash') || item.id.includes('carpet') ? 'kg' : 'pc');
     });
     return u;
   });
   
   const [isExpress, setIsExpress] = useState(false);
+  const [garmentPhotos, setGarmentPhotos] = useState([]);
+  const fileInputRef = useRef(null);
+
+  const handlePhotoUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newPhotos = files.map(file => URL.createObjectURL(file));
+    setGarmentPhotos(prev => [...prev, ...newPhotos]);
+  };
+
   const manualDateRef = useRef(null);
 
   // Dynamic Date Generation (coordinates correctly with real clock)
@@ -153,15 +141,18 @@ const CartPage = () => {
     setQuantities(prev => {
       const current = prev[id] || 0;
       const newVal = Math.max(0, current + delta);
+      const next = { ...prev };
       if (newVal === 0) {
-        setCartItems(items => items.filter(i => i.id !== id));
-        const next = { ...prev };
         delete next[id];
-        return next;
+      } else {
+        next[id] = newVal;
       }
-      return { ...prev, [id]: newVal };
+      // Sync back to localStorage
+      localStorage.setItem('cart_quantities', JSON.stringify(next));
+      return next;
     });
   };
+
 
   const getItemPrice = (item) => {
     const unit = billingUnits[item.id] || 'pc';
@@ -190,13 +181,20 @@ const CartPage = () => {
   };
 
   const subtotal = cartItems.reduce((acc, item) => {
-    const price = getItemPrice(item);
+    // BRD pricing: Base Rate * Aggregator Fee (mocked as 1.1 for 10%)
+    const aggregatorFee = 1.1;
+    const price = (item.basePrice || 0) * aggregatorFee;
     return acc + (price * (quantities[item.id] || 0));
   }, 0);
+
   const logisticsFee = 50.00;
-  const expressFee = isExpress ? 150.00 : 0;
-  const discount = isPromoApplied ? (subtotal * 0.3) : 0;
-  const grandTotal = subtotal + logisticsFee + expressFee - discount;
+  const surcharge = isExpress ? 1.5 : 1.0;
+  
+  // Total Price = [(Base * Fee) + Logistics] * Surcharge
+  const grandTotal = (subtotal + logisticsFee) * surcharge;
+  const discount = isPromoApplied ? (grandTotal * 0.3) : 0;
+  const finalTotal = grandTotal - discount;
+
 
   const handleApplyPromo = () => {
     if (promoCode.toUpperCase() === 'FRESH30') {
@@ -313,6 +311,53 @@ const CartPage = () => {
                   </motion.button>
                 </motion.div>
               )}
+            </motion.div>
+
+            {/* Optional Garment Photos */}
+            <motion.div variants={itemVariants} className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline font-black text-2xl flex items-center gap-3 tracking-tighter">
+                  <span className="material-symbols-outlined text-primary text-3xl">photo_library</span>
+                  Garment Photos
+                </h3>
+                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest bg-surface-container-low px-3 py-1.5 rounded-lg opacity-40">Optional</span>
+              </div>
+              <p className="text-[11px] font-bold text-on-surface-variant opacity-60 leading-relaxed -mt-2">Upload photos for condition verification before pickup.</p>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square rounded-[2rem] border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                >
+                   <span className="material-symbols-outlined text-outline-variant group-hover:text-primary">add_a_photo</span>
+                   <span className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant/40 group-hover:text-primary">Upload</span>
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handlePhotoUpload} 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+                {garmentPhotos.map((p, idx) => (
+                  <div key={idx} className="aspect-square rounded-[2rem] bg-surface-container-low border border-outline-variant/10 overflow-hidden relative group">
+                    <img src={p} alt="Garment" className="w-full h-full object-cover" />
+                    <button 
+                      onClick={() => setGarmentPhotos(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-2 right-2 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <span className="material-symbols-outlined text-xs">close</span>
+                    </button>
+                  </div>
+                ))}
+                {garmentPhotos.length === 0 && Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="aspect-square rounded-[2rem] bg-surface-container-low border border-outline-variant/10 flex items-center justify-center text-outline-variant opacity-20">
+                    <span className="material-symbols-outlined text-xl">image</span>
+                  </div>
+                ))}
+              </div>
+
             </motion.div>
 
             {/* Scheduling Section */}
@@ -559,9 +604,9 @@ const CartPage = () => {
                   </div>
                 )}
                 {isExpress && (
-                  <div className="flex justify-between items-center text-sm md:text-md">
-                    <span className="text-primary font-bold">Express Handling</span>
-                    <span className="font-black text-primary leading-none">₹{expressFee.toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-sm md:text-md text-primary">
+                    <span className="font-bold">Express Surcharge (1.5x)</span>
+                    <span className="font-black leading-none">× 1.50</span>
                   </div>
                 )}
                 
@@ -569,19 +614,29 @@ const CartPage = () => {
                 
                 <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 mb-2">Grand Total</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 mb-2 font-bold">Upfront Pickup Security (5%)</p>
+                    <p className="text-xl font-black text-primary leading-none tracking-tighter mb-4">₹{(finalTotal * 0.05).toFixed(2)}</p>
+                    
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 mb-2">Total Order Value</p>
                     <AnimatePresence mode="wait">
                       <motion.p 
-                        key={grandTotal}
+                        key={finalTotal}
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="text-4xl md:text-5xl font-black text-on-surface leading-none tracking-tighter"
                       >
-                        ₹{grandTotal.toFixed(2)}
+                        ₹{finalTotal.toFixed(2)}
                       </motion.p>
                     </AnimatePresence>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-8 p-4 bg-primary/5 rounded-2xl border border-primary/10 flex items-start gap-3">
+                <span className="material-symbols-outlined text-primary text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
+                <p className="text-[9px] font-bold text-primary italic leading-relaxed">
+                  Only 5% will be charged upon pickup. The remaining balance (95%) is payable only after your clothes are ready and verified.
+                </p>
               </div>
 
               <motion.button 

@@ -22,6 +22,9 @@ import PayoutSettings from '../pages/PayoutSettings';
 import VendorProfile from '../pages/VendorProfile';
 import VendorNotifications from '../pages/VendorNotifications';
 import VendorOrderHistory from '../pages/VendorOrderHistory';
+import WalkInOrderPage from '../pages/WalkInOrderPage';
+import PromotionManagerPage from '../pages/PromotionManagerPage';
+import B2BFulfillmentPage from '../pages/B2BFulfillmentPage';
 
 // Profile sub-pages
 import EditProfile from '../pages/EditProfile';
@@ -56,6 +59,11 @@ const VendorRoutes = () => {
         <Route path="/profile" element={<VendorProfile />} />
         <Route path="/notifications" element={<VendorNotifications />} />
         <Route path="/order-history" element={<VendorOrderHistory />} />
+        
+        {/* Sprint 3: Operational Hub */}
+        <Route path="/walk-in" element={<WalkInOrderPage />} />
+        <Route path="/promotions" element={<PromotionManagerPage />} />
+        <Route path="/fulfillment" element={<B2BFulfillmentPage />} />
         
         {/* Profile Sub-pages */}
         <Route path="/edit-profile" element={<EditProfile />} />

@@ -47,16 +47,20 @@ const FAQPage = () => {
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32">
-            <header className="px-6 pt-16 mb-8">
-                <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => navigate(-1)}
-                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-on-surface mb-8 border border-outline-variant/10"
-                >
-                    <span className="material-symbols-outlined">arrow_back</span>
-                </motion.button>
-                <h1 className="text-4xl font-black tracking-tighter italic leading-none mb-2">Faq</h1>
-                <p className="text-xs font-bold text-on-surface-variant uppercase tracking-widest opacity-60">Knowledge Base</p>
+            <header className="px-6 pt-4 flex items-center mb-8">
+                <div className="flex items-center gap-4">
+                    <motion.button 
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => navigate(-1)}
+                        className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-on-surface border border-outline-variant/10"
+                    >
+                        <span className="material-symbols-outlined text-xl">arrow_back</span>
+                    </motion.button>
+                    <div>
+                        <h1 className="text-2xl font-black tracking-tighter italic leading-none">Faq</h1>
+                        <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest opacity-40 mt-1">Instant Knowledge Base</p>
+                    </div>
+                </div>
             </header>
 
             <main className="px-6 max-w-2xl mx-auto">

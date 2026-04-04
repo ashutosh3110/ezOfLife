@@ -59,6 +59,15 @@ const MoreMenuPage = () => {
     </motion.button>
   );
 
+  const userRole = localStorage.getItem('userRole') || 'customer';
+  const isVendor = userRole === 'vendor';
+
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('user_auth_token');
+    navigate('/user/auth');
+  };
+
   return (
     <div className="bg-background text-on-surface min-h-[100dvh] flex flex-col">
       <main className="pt-24 pb-44 px-6 max-w-2xl mx-auto w-full">
@@ -78,6 +87,12 @@ const MoreMenuPage = () => {
         >
           <MenuSection title="Operational Support" icon="account_tree">
             <MenuItem 
+              icon="account_balance_wallet" 
+              title="My Wallet" 
+              desc="Credits & History" 
+              onClick={() => navigate('/user/profile/wallet')}
+            />
+            <MenuItem 
               icon="help_center" 
               title="Help Center" 
               desc="Guides & Tutorials" 
@@ -87,24 +102,48 @@ const MoreMenuPage = () => {
               icon="quiz" 
               title="FAQs" 
               desc="Instant Answers" 
-              onClick={() => navigate('/user/support')}
+              onClick={() => navigate('/user/faq')}
             />
             <MenuItem 
               icon="rate_review" 
               title="Drop Feedback" 
               desc="Improve the experience" 
-              onClick={() => {}}
+              onClick={() => navigate('/user/review')}
             />
           </MenuSection>
 
           <MenuSection title="Ecosystem" icon="lan">
             <MenuItem 
-              icon="storefront" 
+              icon="handshake" 
               title="Partner with us" 
-              desc="Register as Vendor" 
+              desc="Logistics & Supplies" 
               color="primary"
-              onClick={() => navigate('/vendor/auth')}
+              onClick={() => navigate('/user/partnerships')}
             />
+            <MenuItem 
+              icon="campaign" 
+              title="Advertise" 
+              desc="Digital Media Kit" 
+              color="primary"
+              onClick={() => navigate('/user/advertise')}
+            />
+            {isVendor ? (
+              <MenuItem 
+                icon="dashboard_customize" 
+                title="Vendor Dashboard" 
+                desc="Manage your Shop Operations" 
+                color="secondary"
+                onClick={() => navigate('/vendor/dashboard')}
+              />
+            ) : (
+              <MenuItem 
+                icon="storefront" 
+                title="Become a Vendor" 
+                desc="Onboard Physical Shop" 
+                color="primary"
+                onClick={() => navigate('/user/become-vendor')}
+              />
+            )}
             <MenuItem 
               icon="work" 
               title="Careers" 
@@ -120,7 +159,7 @@ const MoreMenuPage = () => {
               title="Terms of Service" 
               desc="Rules of Engagement" 
               rightIcon="open_in_new"
-              onClick={() => navigate('/user/privacy')}
+              onClick={() => navigate('/user/terms')}
             />
             <MenuItem 
               icon="verified_user" 
@@ -137,7 +176,7 @@ const MoreMenuPage = () => {
               title="Terminate Session" 
               desc="Sign out of local instance" 
               isError={true}
-              onClick={() => navigate('/user/auth')}
+              onClick={handleLogout}
             />
           </MenuSection>
 

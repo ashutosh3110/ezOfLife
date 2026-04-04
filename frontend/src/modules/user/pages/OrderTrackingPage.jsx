@@ -32,11 +32,12 @@ const OrderTrackingPage = () => {
   };
 
   const timelineSteps = [
-    { label: 'Order Placed', time: '10:20 AM', icon: 'check_circle', status: 'completed' },
-    { label: 'Picked up', time: '11:15 AM', icon: 'local_laundry_service', status: 'completed' },
-    { label: 'In Transit', time: 'Expected 12:45 PM', icon: 'delivery_dining', status: 'active' },
-    { label: 'Verification', time: 'Pending', icon: 'fact_check', status: 'pending' }
+    { label: 'Pickup', time: '10:20 AM', icon: 'photo_camera', status: 'completed', stepNum: 'Step 1 of 4' },
+    { label: 'Shop Intake', time: '11:15 AM', icon: 'inventory_2', status: 'completed', stepNum: 'Step 2 of 4' },
+    { label: 'Processing', time: '12:10 PM', icon: 'local_laundry_service', status: 'active', stepNum: 'Step 3 of 4' },
+    { label: 'Handover', time: 'Pending', icon: 'verified_user', status: 'pending', stepNum: 'Step 4 of 4' }
   ];
+
 
   return (
     <motion.div 
@@ -119,7 +120,11 @@ const OrderTrackingPage = () => {
               <motion.button whileTap={{ scale: 0.9 }} className="bg-primary text-on-primary w-11 h-11 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
                 <span className="material-symbols-outlined text-xl">call</span>
               </motion.button>
-              <motion.button whileTap={{ scale: 0.9 }} className="bg-surface-container-high text-primary w-11 h-11 rounded-2xl flex items-center justify-center border border-outline-variant/10">
+              <motion.button 
+                whileTap={{ scale: 0.9 }} 
+                onClick={() => navigate('/user/chat/EZ-8821')}
+                className="bg-surface-container-high text-primary w-11 h-11 rounded-2xl flex items-center justify-center border border-outline-variant/10 shadow-sm"
+              >
                 <span className="material-symbols-outlined text-xl">chat_bubble</span>
               </motion.button>
             </div>
@@ -133,7 +138,10 @@ const OrderTrackingPage = () => {
               <h2 className="font-headline font-black text-2xl text-primary tracking-tighter leading-none mb-2">Live Updates</h2>
               <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">Estimated delivery: 12:45 PM</p>
             </div>
-            <button className="text-primary font-black text-[10px] uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-full flex items-center gap-2 hover:bg-primary/10 transition-colors">
+            <button 
+              onClick={() => navigate('/user/chat/EZ-8821')}
+              className="text-primary font-black text-[10px] uppercase tracking-widest bg-primary/5 px-4 py-2 rounded-full flex items-center gap-2 hover:bg-primary/10 transition-colors"
+            >
               Help
               <span className="material-symbols-outlined text-xs">support_agent</span>
             </button>
@@ -175,11 +183,13 @@ const OrderTrackingPage = () => {
                   </span>
                 </motion.div>
                 <div className="text-center">
+                  <p className="text-[7px] font-black text-primary uppercase tracking-widest opacity-50 block mb-1">{step.stepNum}</p>
                   <p className={`font-black text-[10px] uppercase tracking-tighter leading-tight ${step.status === 'pending' ? 'text-on-surface-variant opacity-40' : 'text-on-surface'}`}>
                     {step.label}
                   </p>
                   <p className="text-[9px] font-bold text-on-surface-variant opacity-60 mt-0.5">{step.time}</p>
                 </div>
+
               </div>
             ))}
           </div>

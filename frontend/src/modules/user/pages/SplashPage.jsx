@@ -23,10 +23,33 @@ const SplashPage = () => {
       });
     }
 
-    // Automatic redirect after 4 seconds
+    // Automatic redirect after 3 seconds based on role-based session check
     const redirectTimer = setTimeout(() => {
-      navigate('/user/auth');
-    }, 4000);
+      const userSession = localStorage.getItem('userSession');
+      const userRole = localStorage.getItem('userRole');
+
+      if (userSession && userRole) {
+        switch (userRole) {
+          case 'admin':
+            navigate('/admin/dashboard', { replace: true });
+            break;
+          case 'vendor':
+            navigate('/vendor/dashboard', { replace: true });
+            break;
+          case 'rider':
+            navigate('/rider/dashboard', { replace: true });
+            break;
+          case 'customer':
+          case 'user':
+            navigate('/user/home', { replace: true });
+            break;
+          default:
+            navigate('/user/home', { replace: true });
+        }
+      } else {
+        navigate('/user/auth', { replace: true });
+      }
+    }, 3000);
 
     return () => clearTimeout(redirectTimer);
   }, [navigate]);

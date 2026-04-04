@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import UserHeader from '../components/UserHeader';
+import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
   const bgRef = useRef(null);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
 
   useEffect(() => {
     const blobs = bgRef.current?.querySelectorAll('.blob');
@@ -184,12 +187,18 @@ const OrderConfirmationPage = () => {
                 <motion.button 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => navigate('/user/payment')}
+                  onClick={() => {
+                    addNotification('order_placed', 'Order Confirmed', 'Your laundry request #EZ-8821 has been successfully queued.', 'user');
+                    addNotification('order_placed', 'New Order #EZ-8821', 'A new laundry request is available for pickup in HSR Layout.', 'rider');
+                    addNotification('order_placed', 'Incoming Order #EZ-8821', 'New Premium Wash & Fold order received. Preparing for intake.', 'vendor');
+                    navigate('/user/payment');
+                  }}
                   className="w-full py-6 rounded-2xl bg-primary-gradient text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest"
                 >
                   Confirm Order
                   <span className="material-symbols-outlined text-2xl">auto_awesome</span>
                 </motion.button>
+
 
                 <p className="text-center text-[10px] text-on-surface-variant font-bold leading-relaxed opacity-50 px-6">
                   By confirming, you agree to Ez of life's <span className="underline decoration-primary/30">Terms of Service</span> and professional handling guidelines.

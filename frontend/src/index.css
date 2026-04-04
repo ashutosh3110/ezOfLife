@@ -83,12 +83,20 @@
   --radius-xl: 3rem;
 }
 
+html {
+  background-color: #89ECDA; /* Matches primary background to hide any white overscroll */
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none; /* Disables the native pull-to-refresh/bounce that reveals white space */
+}
+
 @layer base {
   body {
     background: linear-gradient(135deg, #89ECDA 0%, #a1f0e2 100%);
     background-attachment: fixed;
     @apply text-on-surface antialiased font-body overflow-x-hidden w-full;
     min-height: 100dvh;
+    min-height: 100svh; /* More robust for mobile browser chrome */
+    position: relative;
     touch-action: pan-x pan-y;
     user-select: none;
     -webkit-user-select: none;
@@ -155,7 +163,55 @@
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  .premium-reflection {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .premium-reflection::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 45%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.05) 55%,
+      transparent 100%
+    );
+    transform: rotate(25deg);
+    transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .premium-reflection:hover::after {
+    left: 100%;
+    top: 100%;
+  }
+
+  .tactical-glow {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .tactical-glow:hover {
+    box-shadow: 0 0 25px rgba(2, 132, 199, 0.15);
+  }
+
+  .gpu-accelerated {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: transform, opacity;
+  }
 }
+
 
 /* Strategic Admin Overrides - Enterprise professional feel */
 .admin-theme {

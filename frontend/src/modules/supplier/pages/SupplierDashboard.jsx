@@ -30,32 +30,44 @@ const SupplierDashboard = () => {
     return (
         <div className="bg-background text-on-surface min-h-screen pb-32 font-body">
             {/* Header */}
-            <header className="px-6 pt-12 pb-8 bg-white border-b border-outline-variant/10 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+            <header className="px-6 pt-4 flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-on-surface border border-black/5 cursor-pointer">
+                        <span className="material-symbols-outlined text-xl">inventory_2</span>
+                    </div>
                     <div>
-                        <h1 className="text-2xl font-black tracking-tighter italic text-on-surface uppercase">B2B Hub</h1>
-                        <p className="text-[10px] font-black text-on-surface/40 uppercase tracking-widest">Material Supplier Portal</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/10 flex items-center justify-center text-on-surface">
-                        <span className="material-symbols-outlined">inventory_2</span>
+                        <h1 className="text-2xl font-black tracking-tighter italic text-on-surface uppercase leading-none">B2B Hub</h1>
+                        <p className="text-[9px] font-black text-on-surface/40 uppercase tracking-widest mt-1">Material Supplier Portal</p>
                     </div>
                 </div>
-
-                <div className="flex gap-4 mb-4">
-                    <div className="flex-1 bg-surface-container-low p-4 rounded-3xl border border-outline-variant/10">
-                        <p className="text-[9px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Weekly Volume</p>
-                        <h2 className="text-xl font-black">1,800+ <span className="text-xs font-medium text-on-surface/40">Units</span></h2>
-                    </div>
-                    <div className="flex-1 bg-primary text-on-primary p-4 rounded-3xl shadow-xl shadow-primary/20">
-                        <p className="text-[9px] font-bold text-white/50 uppercase tracking-widest mb-1">Cycle Deadline</p>
-                        <h2 className="text-xl font-black">2d 14h</h2>
-                    </div>
-                </div>
+                <motion.div 
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => navigate('/supplier/profile')}
+                    className="w-10 h-10 rounded-full bg-white border border-black/5 overflow-hidden shadow-sm cursor-pointer"
+                >
+                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=100" alt="Supplier" className="w-full h-full object-cover" />
+                </motion.div>
             </header>
 
-            <main className="px-6 pt-8 max-w-md mx-auto">
+            <main className="px-6 space-y-8 flex-1 max-w-xl mx-auto">
+                <section className="grid grid-cols-2 gap-4">
+                    <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-sm transition-all hover:shadow-md">
+                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Weekly Volume</p>
+                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">1,800+ <span className="text-[10px] opacity-40">Units</span></h2>
+                        <span className="text-[9px] text-primary font-black uppercase mt-1.5 block flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px]">trending_up</span>
+                            14% growth
+                        </span>
+                    </div>
+                    <div className="bg-primary text-on-primary p-5 rounded-3xl shadow-xl shadow-black/20 transition-all hover:scale-[1.02]">
+                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Cycle Deadline</p>
+                        <h2 className="text-3xl font-black tracking-tighter leading-none">2d 14h</h2>
+                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">Prepare Next Batch</p>
+                    </div>
+                </section>
+
                 {/* Custom Tabs */}
-                <div className="flex bg-white/50 p-1 rounded-full border border-outline-variant/10 mb-8 backdrop-blur-sm">
+                <div className="flex bg-white/30 p-1.5 rounded-full border border-black/5 mb-8 backdrop-blur-sm">
                     {['Consolidation', 'History', 'Logistics'].map(tab => (
                         <button 
                             key={tab}

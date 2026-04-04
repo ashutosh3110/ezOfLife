@@ -13,12 +13,15 @@ import {
   Monitor,
   Calendar,
   Filter,
-  Download
+  Download,
+  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ComposedChart, Bar, Line, LineChart
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import { mockAdminData } from '../data/mockData';
 import MetricRow from '../components/cards/MetricRow';
 import PageHeader from '../components/common/PageHeader';
@@ -29,6 +32,7 @@ import ComparisonChart from '../components/charts/ComparisonChart';
 import ProfessionalTooltip from '../components/common/ProfessionalTooltip';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const settlementColumns = [
     { 
       header: 'Partner Vendor', 
@@ -68,18 +72,126 @@ export default function Dashboard() {
         ]}
       />
 
-      {/* Performance Metric Strip */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 divide-x divide-slate-100">
-            <MetricRow label="Total Revenue" value="₹42,850" change="+12.2%" trend="up" icon={IndianRupee} currency="INR" />
-            <MetricRow label="Total Orders" value="1,248" change="+8.1%" trend="up" icon={ShoppingCart} />
-            <MetricRow label="Active Vendors" value="32" change="+2" trend="up" icon={Store} />
-            <MetricRow label="Total Users" value="8,420" change="+14.2%" trend="up" icon={UsersIcon} />
-            <MetricRow label="Avg. Delivery Time" value="14.2m" change="-2.4m" trend="up" icon={Clock} />
+      {/* Financial Performance Matrix (Phase 3 Requirement) */}
+      <div className="bg-slate-900 border-b border-slate-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(2,132,199,0.15),transparent)] pointer-events-none"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-x divide-slate-800 max-w-[1600px] mx-auto w-full relative z-10">
+            <div className="p-8 flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Gross Merchandise (GMV)</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹8,42,150</span>
+                <span className="text-[10px] font-black text-emerald-400 flex items-center gap-1 uppercase tracking-widest"><TrendingUp size={12} /> +14.2%</span>
+              </div>
+            </div>
+            <div className="p-8 flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Platform Net Yield</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-sky-400 tracking-tighter italic tabular-nums">₹1,26,322</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest opacity-60">15% Fee Base</span>
+              </div>
+            </div>
+            <div className="p-8 flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Logistics Disbursements</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹64,280</span>
+                <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1"><Clock size={12} /> 12 Pending</span>
+              </div>
+            </div>
+            <div className="p-8 flex flex-col gap-2">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Vendor Settlements</span>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white tracking-tighter italic tabular-nums">₹6,51,548</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest opacity-60">Cycle: Weekly</span>
+              </div>
+            </div>
         </div>
       </div>
 
+      {/* Mission Control: System Health (Phase 3 Requirement) */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-[1600px] mx-auto w-full px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping absolute inset-0"></div>
+                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full relative"></div>
+              </div>
+              <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Operational Health: Optimal</span>
+            </div>
+            <div className="h-4 w-px bg-slate-200"></div>
+            <div className="flex gap-6">
+               <div className="flex items-center gap-2">
+                 <Cpu size={12} className="text-slate-400" />
+                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">API Latency: <span className="text-slate-900">42ms</span></span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Monitor size={12} className="text-slate-400" />
+                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Uptime: <span className="text-slate-900">99.98%</span></span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Activity size={12} className="text-slate-400" />
+                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Load: <span className="text-slate-900">Low (12.4%)</span></span>
+               </div>
+            </div>
+          </div>
+          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Live Sync: Active Protocol</p>
+        </div>
+      </div>
+
+
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+        {/* Real-time Alert Panel (BRD 3.2.C) */}
+        <div className="bg-white rounded-sm border border-slate-200 overflow-hidden shadow-sm">
+          <div className="p-4 bg-slate-900 border-b border-slate-800 flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={14} className="text-amber-400" />
+              <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Priority Operational Alerts</h3>
+            </div>
+            <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest bg-amber-400/10 px-2 py-0.5 rounded-sm">2 Critical Issues</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-sm bg-rose-50 text-rose-500 flex items-center justify-center border border-rose-100">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-black text-slate-900 uppercase">DELAYED PICKUP (&gt;2HR)</span>
+                    <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-sm">CRITICAL</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #EZ-9283 · Assigned to Marcus Chen · Delay: 142m</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => navigate('/admin/orders')}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
+              >
+                Intercept <ArrowRight size={10} />
+              </button>
+            </div>
+            <div className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-sm bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                  <IndianRupee size={18} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-black text-slate-900 uppercase">UNPAID DELIVERY DETECTED</span>
+                    <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-sm">DISPUTE</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Order #EZ-7712 · COD Payment Missing · Handover Complete</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => navigate('/admin/dispute-center')}
+                className="px-4 py-2 bg-white border border-slate-200 text-slate-900 text-[9px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all rounded-sm flex items-center gap-2"
+              >
+                Resolve <ArrowRight size={10} />
+              </button>
+            </div>
+          </div>
+        </div>
         {/* Analytics Grid: Enterprise Dark Border Technique */}
         <div className="grid grid-cols-1 xl:grid-cols-2 bg-slate-200 gap-px border border-slate-200 transition-all rounded-sm overflow-hidden min-h-[400px]">
           <ChartPanel 

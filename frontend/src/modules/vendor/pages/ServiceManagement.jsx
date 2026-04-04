@@ -58,38 +58,76 @@ const ServiceManagement = () => {
                     </div>
                     
                     <div className="space-y-3">
-                        {services.map((service, idx) => (
-                            <div key={service.id} className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex items-center justify-between gap-6 transition-all group">
-                                <div className="flex items-center gap-4 min-w-0">
-                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active ? 'bg-primary/5 text-primary' : 'bg-surface-container text-outline-variant/30'}`}>
-                                        <span className="material-symbols-outlined text-[20px]">{service.icon}</span>
+                        {services.map((service, idx) => {
+                            const aggregatorFee = Math.round(service.basePrice * 0.15);
+                            const netEarnings = service.basePrice - aggregatorFee;
+
+                            return (
+                                <div key={service.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col gap-4 transition-all group overflow-hidden relative">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4 min-w-0">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active ? 'bg-primary/5 text-primary' : 'bg-surface-container text-outline-variant/30'}`}>
+                                                <span className="material-symbols-outlined text-[20px]">{service.icon}</span>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="text-sm font-bold text-on-surface tracking-tight truncate">{service.name}</h4>
+                                                <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-widest leading-none mt-1">Unit: {service.unit}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-[8px] font-black uppercase tracking-widest ${service.active ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                                {service.active ? 'Active' : 'Inactive'}
+                                            </span>
+                                            <div 
+                                                onClick={() => toggleService(idx)}
+                                                className={`w-12 h-6 rounded-full relative cursor-pointer transition-all duration-300 ${service.active ? 'bg-emerald-500 shadow-lg shadow-emerald-200' : 'bg-slate-200 shadow-inner'}`}
+                                            >
+                                                <motion.div 
+                                                    animate={{ x: service.active ? 26 : 4 }}
+                                                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <h4 className="text-sm font-bold text-on-surface tracking-tight truncate">{service.name}</h4>
-                                        <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{service.unit}</p>
+
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1 italic opacity-60">Base Rate (₹)</label>
+                                            <div className="relative group/price">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400 group-focus-within/price:text-primary transition-colors">₹</span>
+                                                <input 
+                                                    type="number"
+                                                    value={service.basePrice}
+                                                    onChange={(e) => updatePrice(idx, e.target.value)}
+                                                    className="w-full pl-8 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] text-sm font-black text-slate-900 focus:bg-white focus:border-primary/20 transition-all outline-none shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-900 rounded-[1.5rem] p-4 flex flex-col justify-center border border-white/10 shadow-xl">
+                                            <div className="flex justify-between items-center mb-1.5 opacity-60">
+                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">Platform Fee</span>
+                                                <span className="text-[8px] font-black text-rose-400">-₹{aggregatorFee}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[8px] font-black text-white uppercase tracking-[0.25em]">Net Yield</span>
+                                                <span className="text-md font-black text-emerald-400 tabular-nums">₹{netEarnings}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                                
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <div className="relative group/price">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300 group-hover/price:text-[#3D5AFE] transition-colors">₹</span>
-                                        <input 
-                                            type="text"
-                                            value={service.basePrice}
-                                            onChange={(e) => updatePrice(idx, e.target.value)}
-                                            className="w-20 pl-6 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold text-slate-700 focus:bg-white focus:border-[#3D5AFE]/20 transition-all outline-none"
+                                    
+                                    {/* Profit Margin Indicator (Phase 2 Requirement) */}
+                                    <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.min((netEarnings / service.basePrice) * 100, 100)}%` }}
+                                            className="h-full bg-emerald-500 opacity-60"
                                         />
                                     </div>
-                                    <div 
-                                        onClick={() => toggleService(idx)}
-                                        className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${service.active ? 'bg-green-100' : 'bg-slate-100'}`}
-                                    >
-                                        <div className={`absolute top-0.5 w-3 h-3 rounded-full shadow-sm transition-all ${service.active ? 'right-0.5 bg-green-500' : 'left-0.5 bg-slate-300'}`}></div>
-                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
+
                 </section>
 
                 <div className="pt-8">
