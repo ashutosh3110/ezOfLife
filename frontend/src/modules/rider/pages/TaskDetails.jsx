@@ -11,7 +11,7 @@ const TaskDetails = () => {
     const [photoUploaded, setPhotoUploaded] = useState(false);
 
     const task = useMemo(() => ({
-        id: id || 'EZ-8821',
+        id: id || 'SZ-8821',
         type: 'Pickup',
         source: 'Heritage Cleaners',
         address: 'HSR Layout, Sector 7, Plot 42',

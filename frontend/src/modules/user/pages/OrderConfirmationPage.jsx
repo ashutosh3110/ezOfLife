@@ -184,7 +184,14 @@ const OrderConfirmationPage = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
+<<<<<<< HEAD
                     navigate('/user/success', { state: { order } });
+=======
+                    addNotification('order_placed', 'Order Confirmed', 'Your laundry request #SZ-8821 has been successfully queued.', 'user');
+                    addNotification('order_placed', 'New Order #SZ-8821', 'A new laundry request is available for pickup in HSR Layout.', 'rider');
+                    addNotification('order_placed', 'Incoming Order #SZ-8821', 'New Premium Wash & Fold order received. Preparing for intake.', 'vendor');
+                    navigate('/user/payment');
+>>>>>>> ece4e330e906b66198334d64589772fab6d3c0be
                   }}
                   className="w-full py-6 rounded-2xl bg-primary-gradient text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest"
                 >
@@ -194,7 +201,7 @@ const OrderConfirmationPage = () => {
 
 
                 <p className="text-center text-[10px] text-on-surface-variant font-bold leading-relaxed opacity-50 px-6">
-                  By confirming, you agree to Ez of life's <span className="underline decoration-primary/30">Terms of Service</span> and professional handling guidelines.
+                  By confirming, you agree to Spinzyt's <span className="underline decoration-primary/30">Terms of Service</span> and professional handling guidelines.
                 </p>
               </div>
             </motion.div>
@@ -226,7 +233,7 @@ const OrderConfirmationPage = () => {
 
       {/* Simplified Mobile Footer */}
       <footer className="pb-12 text-center text-on-surface-variant/30 font-black text-[10px] uppercase tracking-widest px-6">
-        © 2026 Ez of life Inc. • Your garments, handled with editorial care.
+        © 2026 Spinzyt Inc. • Your garments, handled with editorial care.
       </footer>
     </motion.div>
   );
