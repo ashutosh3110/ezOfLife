@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const VendorAuth = () => {
     const navigate = useNavigate();
@@ -9,6 +10,7 @@ const VendorAuth = () => {
     const [loginPhone, setLoginPhone] = useState('');
     const [registerShop, setRegisterShop] = useState('');
     const [registerPhone, setRegisterPhone] = useState('');
+    const [apiError, setApiError] = useState('');
 
     const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
     const isRegisterValid = registerShop.length >= 3 && registerPhone.length === 10 && /^\d+$/.test(registerPhone);
@@ -112,14 +114,30 @@ const VendorAuth = () => {
 
                                             <motion.button
                                                 variants={itemVariants}
-                                                whileHover={isLoginValid ? { scale: 1.02 } : {}}
                                                 whileTap={isLoginValid ? { scale: 0.98 } : {}}
-                                                onClick={() => isLoginValid && navigate('/vendor/otp')}
+                                                onClick={async () => {
+                                                    if (isLoginValid) {
+                                                        setApiError('');
+                                                        try {
+                                                            const response = await authApi.requestOtp(loginPhone, 'WhatsApp', 'login', 'Vendor');
+                                                            if (response.message === 'OTP sent successfully') {
+                                                                navigate('/vendor/otp', { state: { phone: loginPhone, channel: 'WhatsApp' } });
+                                                            } else {
+                                                                setApiError(response.message || 'Something went wrong');
+                                                            }
+                                                        } catch (error) {
+                                                            setApiError('Server error. Please try again.');
+                                                        }
+                                                    }
+                                                }}
                                                 disabled={!isLoginValid}
                                                 className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${isLoginValid ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                                             >
                                                 Send OTP
                                             </motion.button>
+                                            {apiError && isLogin && (
+                                                <p className="text-[10px] text-error font-black text-center mt-2 animate-pulse">{apiError}</p>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
@@ -167,14 +185,31 @@ const VendorAuth = () => {
 
                                             <motion.button
                                                 variants={itemVariants}
-                                                whileHover={isRegisterValid ? { scale: 1.02 } : {}}
                                                 whileTap={isRegisterValid ? { scale: 0.98 } : {}}
-                                                onClick={() => isRegisterValid && navigate('/vendor/otp')}
+                                                onClick={async () => {
+                                                    if (isRegisterValid) {
+                                                        setApiError('');
+                                                        try {
+                                                            const response = await authApi.requestOtp(registerPhone, 'WhatsApp', 'signup', 'Vendor');
+                                                            if (response.message === 'OTP sent successfully') {
+                                                                // Note: we can also save shop name here or pass it to next step
+                                                                navigate('/vendor/otp', { state: { phone: registerPhone, channel: 'WhatsApp', shopName: registerShop } });
+                                                            } else {
+                                                                setApiError(response.message || 'Something went wrong');
+                                                            }
+                                                        } catch (error) {
+                                                            setApiError('Server error. Please try again.');
+                                                        }
+                                                    }
+                                                }}
                                                 disabled={!isRegisterValid}
                                                 className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs mt-2 transition-all duration-300 ${isRegisterValid ? 'vendor-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                                             >
                                                 Send OTP
                                             </motion.button>
+                                            {apiError && !isLogin && (
+                                                <p className="text-[10px] text-error font-black text-center mt-2 animate-pulse">{apiError}</p>
+                                            )}
                                         </div>
                                     </div>
                                 )}

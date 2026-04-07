@@ -1,38 +1,80 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import useNotificationStore from '../../../shared/stores/notificationStore';
+import { orderApi } from '../../../lib/api';
 
 const RiderDashboard = () => {
     const navigate = useNavigate();
     const [isOnline, setIsOnline] = useState(true);
-    const notifications = useNotificationStore((state) => state.notifications);
+    const { notifications, dismissOrderNotification, fetchNotifications } = useNotificationStore();
+    const [activeTasks, setActiveTasks] = useState([]);
+    const [riderStats, setRiderStats] = useState({
+        earnings: '₹0',
+        completed: '0',
+        rating: '0'
+    });
+
+    const riderData = JSON.parse(localStorage.getItem('riderData') || '{}');
+    const riderId = riderData.id || riderData._id || localStorage.getItem('userId');
     
+    console.log('--- RIDER DASHBOARD DEBUG ---');
+    console.log('Current Rider ID:', riderId);
+    console.log('Rider Data:', riderData);
+
+    // Fetch Live Data
+    const fetchData = useCallback(async () => {
+        try {
+            const [tasks, stats] = await Promise.all([
+                orderApi.getRiderTasks(riderId),
+                orderApi.getRiderStats(riderId),
+                fetchNotifications(riderId, 'rider')
+            ]);
+            setActiveTasks(tasks || []);
+            setRiderStats(stats);
+        } catch (err) {
+            console.error('Fetch error:', err);
+        }
+    }, [riderId, fetchNotifications]);
+
+    useEffect(() => {
+        fetchData();
+        // Polling for live updates every 15s (Faster for testing as requested)
+        const interval = setInterval(fetchData, 15000);
+        return () => clearInterval(interval);
+    }, [fetchData]);
+    
+
+    const handleAcceptTask = async (notif) => {
+        try {
+            if (notif.orderId) {
+                await orderApi.acceptTask(notif.orderId, riderId);
+                dismissOrderNotification(notif.orderId);
+            }
+            fetchData(); // Refresh tasks
+            navigate(`/rider/task/${notif.orderId || 'EZ-8821'}`);
+        } catch (err) {
+            alert('Claim Failed: ' + err.message);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('riderToken');
+        localStorage.removeItem('riderData');
+        localStorage.removeItem('userId');
+        navigate('/rider/login');
+    };
+
     // Filter notifications for the 'rider' persona
     const riderBroadcasts = useMemo(() => 
-        notifications.filter(n => n.persona === 'rider' && (n.type === 'ready' || n.type === 'assigned')),
+        notifications.filter(n => n.persona === 'rider' && (n.type === 'ready' || n.type === 'assigned' || n.type === 'order_placed')),
     [notifications]);
 
-    const initialTasks = useMemo(() => [
-        { 
-            id: 'EZ-8821', 
-            type: 'Pickup', 
-            vendor: 'Heritage Cleaners', 
-            address: 'HSR Layout, Sector 7', 
-            items: 12, 
-            priority: 'Express', 
-            status: 'Assigned',
-            time: '12m'
-        }
-    ], []);
-
     const stats = useMemo(() => [
-        { label: 'Earnings', value: '₹842', icon: 'payments' },
-        { label: 'Completed', value: '14', icon: 'task' },
-        { label: 'Rating', value: '4.9', icon: 'grade' }
-    ], []);
-
-    const [activeTasks, setActiveTasks] = useState(initialTasks);
+        { label: 'Earnings', value: riderStats.earnings, icon: 'payments' },
+        { label: 'Completed', value: riderStats.completed, icon: 'task' },
+        { label: 'Rating', value: riderStats.rating, icon: 'grade' }
+    ], [riderStats]);
 
     return (
         <div className="bg-slate-50 min-h-screen pb-32 font-sans">
@@ -44,7 +86,9 @@ const RiderDashboard = () => {
                             <span className="material-symbols-outlined text-xl">directions_bike</span>
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">Marcus V.</h1>
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase italic">
+                                {riderData.displayName || 'Fleet Member'}
+                            </h1>
                             <div className="flex items-center gap-1.5 opacity-60">
                                 <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
                                 <span className="text-[9px] font-black uppercase tracking-widest">{isOnline ? 'Active on Fleet' : 'Offline'}</span>
@@ -52,17 +96,27 @@ const RiderDashboard = () => {
                         </div>
                     </div>
                     
-                    {/* Status Toggle */}
-                    <button 
-                        onClick={() => setIsOnline(!isOnline)}
-                        className={`w-14 h-8 rounded-full p-1 transition-all ${isOnline ? 'bg-emerald-600' : 'bg-slate-200'}`}
-                    >
-                        <motion.div 
-                            layout
-                            className="w-6 h-6 bg-white rounded-full shadow-md"
-                            animate={{ x: isOnline ? 24 : 0 }}
-                        />
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {/* Status Toggle */}
+                        <button 
+                            onClick={() => setIsOnline(!isOnline)}
+                            className={`w-14 h-8 rounded-full p-1 transition-all ${isOnline ? 'bg-emerald-600' : 'bg-slate-200'}`}
+                        >
+                            <motion.div 
+                                layout
+                                className="w-6 h-6 bg-white rounded-full shadow-md"
+                                animate={{ x: isOnline ? 24 : 0 }}
+                            />
+                        </button>
+                        {/* Logout Button */}
+                        <button 
+                            onClick={handleLogout}
+                            className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center hover:bg-rose-100 transition-all"
+                            title="Logout"
+                        >
+                            <span className="material-symbols-outlined text-rose-500 text-lg">logout</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Dashboard Quick Stats */}
@@ -109,7 +163,7 @@ const RiderDashboard = () => {
                                         </div>
                                     </div>
                                     <button 
-                                        onClick={() => navigate(`/rider/task/EZ-8821`)}
+                                        onClick={() => handleAcceptTask(notif)}
                                         className="w-full mt-6 py-3.5 bg-white text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all"
                                     >
                                         Accept & Navigate
@@ -118,31 +172,31 @@ const RiderDashboard = () => {
                             ))}
                         </AnimatePresence>
 
-                        {activeTasks.map((task) => (
+                        {activeTasks.length > 0 ? activeTasks.map((task) => (
                             <motion.div 
-                                key={task.id}
-                                layoutId={task.id}
-                                onClick={() => navigate(`/rider/task/${task.id}`)}
+                                key={task._id}
+                                layoutId={task._id}
+                                onClick={() => navigate(`/rider/task/${task._id}`)}
                                 className="bg-white p-5 rounded-[2rem] border border-slate-200 shadow-sm group hover:border-emerald-600 transition-all cursor-pointer overflow-hidden relative"
                             >
                                 {/* Task Priority Bar */}
-                                <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${task.priority === 'Express' ? 'bg-emerald-600' : 'bg-slate-200'}`} />
+                                <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${task.status === 'Ready' ? 'bg-emerald-600' : 'bg-slate-200'}`} />
                                 
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1.5">
-                                            <span className={`px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest ${task.type === 'Pickup' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                                                {task.type}
+                                            <span className={`px-2 py-0.5 rounded-sm text-[8px] font-black uppercase tracking-widest ${task.status === 'Assigned' ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+                                                {task.status}
                                             </span>
-                                            <span className="text-[10px] font-black text-slate-900 uppercase">#{task.id}</span>
+                                            <span className="text-[10px] font-black text-slate-900 uppercase">{task.orderId}</span>
                                         </div>
                                         <h3 className="text-sm font-black text-slate-900 tracking-tight leading-none italic uppercase">
-                                            {task.vendor || task.customer}
+                                            {task.customer?.displayName || 'Direct Order'}
                                         </h3>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Impact</p>
-                                        <p className="text-[11px] font-black text-emerald-600 uppercase leading-none">+{task.time}</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Fee</p>
+                                        <p className="text-[11px] font-black text-emerald-600 uppercase leading-none">₹{(task.totalAmount * 0.05).toFixed(0)}</p>
                                     </div>
                                 </div>
 
@@ -154,14 +208,19 @@ const RiderDashboard = () => {
                                 <div className="flex items-center justify-between pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="material-symbols-outlined text-emerald-600 text-sm">inventory_2</span>
-                                        <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{task.items} Clean Articles</span>
+                                        <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{task.items?.length || 0} Clean Articles</span>
                                     </div>
                                     <button className="px-5 py-2.5 bg-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-black/10 flex items-center gap-2 transition-all active:scale-95">
                                         Details <span className="material-symbols-outlined text-xs">arrow_forward_ios</span>
                                     </button>
                                 </div>
                             </motion.div>
-                        ))}
+                        )) : (
+                            <div className="text-center py-10 opacity-40">
+                                <span className="material-symbols-outlined text-4xl mb-2">inbox</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">No Active Assignments</p>
+                            </div>
+                        )}
                     </div>
                 </section>
 

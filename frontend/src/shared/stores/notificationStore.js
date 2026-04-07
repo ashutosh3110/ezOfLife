@@ -1,44 +1,66 @@
 import { create } from 'zustand';
+import { notificationApi } from '../../lib/api';
 
-/**
- * Platform-wide Notification Store (Phase 4 Requirement)
- * Manages the 12 BRD-defined event triggers across all personas.
- */
 const useNotificationStore = create((set, get) => ({
     notifications: [],
     unreadCount: 0,
+    isLoading: false,
 
-    // Mandatory BRD Triggers
-    addNotification: (type, title, message, persona = 'user') => {
-        const newNotif = {
-            id: Date.now(),
-            type, // 'order_placed', 'rider_assigned', 'pickup_complete', 'at_shop', 'processing', 'ready', 'out_for_delivery', 'delivered', 'payment_pending', 'payment_success', 'dispute_raised', 'b2b_inquiry'
-            title,
-            message,
-            persona,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            read: false,
-        };
-
-        set((state) => ({
-            notifications: [newNotif, ...state.notifications],
-            unreadCount: state.unreadCount + 1
-        }));
-
-        // In a real app, this would also trigger a Push Notification or SMS/WhatsApp via the BRD-defined channels
-        console.log(`[Push] To ${persona.toUpperCase()}: ${title} - ${message}`);
+    fetchNotifications: async (userId, role) => {
+        if (!userId || !role) return;
+        set({ isLoading: true });
+        try {
+            const data = await notificationApi.getNotifications(userId, role);
+            const mapped = data.map(n => ({
+                id: n._id,
+                type: n.type,
+                title: n.title,
+                message: n.message,
+                orderId: n.orderId,
+                read: n.isRead,
+                timestamp: new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                persona: n.role
+            }));
+            
+            set({ 
+                notifications: mapped, 
+                unreadCount: mapped.filter(n => !n.read).length,
+                isLoading: false 
+            });
+        } catch (err) {
+            console.error('Store Fetch Error:', err);
+            set({ isLoading: false });
+        }
     },
 
-    markAsRead: (id) => {
+    markAsRead: async (id) => {
+        try {
+            await notificationApi.markAsRead(id);
+            set((state) => ({
+                notifications: state.notifications.map((n) => 
+                    n.id === id ? { ...n, read: true } : n
+                ),
+                unreadCount: Math.max(0, state.unreadCount - 1)
+            }));
+        } catch (err) {
+            console.error('Mark Read Error:', err);
+        }
+    },
+
+    dismissOrderNotification: (orderId) => {
         set((state) => ({
-            notifications: state.notifications.map((n) => 
-                n.id === id ? { ...n, read: true } : n
-            ),
-            unreadCount: Math.max(0, state.unreadCount - 1)
+            notifications: state.notifications.filter((n) => n.orderId !== orderId),
         }));
     },
 
-    clearAll: () => set({ notifications: [], unreadCount: 0 })
+    clearAll: async (userId, role) => {
+        try {
+            await notificationApi.clearAll(userId, role);
+            set({ notifications: [], unreadCount: 0 });
+        } catch (err) {
+            console.error('Clear Error:', err);
+        }
+    }
 }));
 
 export default useNotificationStore;

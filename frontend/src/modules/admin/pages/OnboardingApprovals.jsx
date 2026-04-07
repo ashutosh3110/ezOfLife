@@ -1,27 +1,54 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileCheck, ShieldCheck, XCircle, MapPin, Calendar, FileText, CheckCircle2, ChevronRight, UserPlus, ShieldAlert, ArrowRight, RotateCw } from 'lucide-react';
-import { mockAdminData } from '../data/mockData';
+import { adminApi } from '../../../lib/api';
 import PageHeader from '../components/common/PageHeader';
 
 export default function OnboardingApprovals() {
-  const initialRequests = useMemo(() => mockAdminData.onboardingRequests, []);
-  const [data, setData] = React.useState(initialRequests);
-  const [selectedDoc, setSelectedDoc] = React.useState(null);
-  const [isProcessing, setIsProcessing] = React.useState(null);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(null);
+
+  useEffect(() => {
+    fetchPending();
+  }, []);
+
+  const fetchPending = async () => {
+    setLoading(true);
+    try {
+      const pending = await adminApi.getPendingApprovals();
+      // Map DB fields to UI fields if needed
+      const mapped = pending.map(v => ({
+        id: v._id,
+        shop: v.shopDetails?.name || v.displayName || `Vendor ${v.phone.slice(-4)}`,
+        address: v.shopDetails?.address || 'No Address Provided',
+        date: new Date(v.createdAt).toLocaleDateString() || 'Recently',
+        docs: ['GST', 'Aadhar'], // Placeholder as docs aren't fully in DB yet
+        phone: v.phone
+      }));
+      setData(mapped);
+    } catch (err) {
+      console.error('Fetch Pending Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAction = async (id, status) => {
     setIsProcessing(id);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    localStorage.setItem(`vendorStatus_${id}`, status);
-    if (status === 'approved') {
-      localStorage.setItem('userRole', 'vendor');
-      alert(`Vendor ${id} Approved. System role updated to VENDOR.`);
+    try {
+      if (status === 'approved') {
+        await adminApi.approveVendor(id);
+      } else {
+        await adminApi.rejectVendor(id);
+      }
+      setData(v => v.filter(req => req.id !== id));
+    } catch (err) {
+      alert('Action failed. Try again.');
+    } finally {
+      setIsProcessing(null);
     }
-    
-    setData(v => v.filter(req => req.id !== id));
-    setIsProcessing(null);
   };
 
   return (

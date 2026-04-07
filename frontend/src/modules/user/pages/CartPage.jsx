@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MASTER_SERVICES } from '../../../shared/data/sharedData';
+import { orderApi } from '../../../lib/api';
+import { GoogleMap, useLoadScript, Marker, Autocomplete } from '@react-google-maps/api';
+
+const libraries = ['places'];
+const mapContainerStyle = { width: '100%', height: '100%' };
+const defaultCenter = { lat: 28.4595, lng: 77.0266 }; // Gurgaon
 
 const CartPage = () => {
   const navigate = useNavigate();
@@ -79,11 +85,59 @@ const CartPage = () => {
   const [custDelivery, setCustDelivery] = useState(null);
 
   const [showAddressPicker, setShowAddressPicker] = useState(false);
-  const addresses = useMemo(() => [
-    { id: 1, type: 'Home', address: 'B-402, Skyline Residency, Sector 44, Gurgaon, HR - 122003' },
-    { id: 2, type: 'Work', address: 'Tower C, Cyber Hub, Phase 3, Gurgaon, HR - 122018' }
-  ], []);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapLocation, setMapLocation] = useState(defaultCenter);
+  const [mapAddress, setMapAddress] = useState('');
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries
+  });
+
+  const autocompleteRef = useRef(null);
+  const mapRef = useRef(null);
+
+  const reverseGeocode = useCallback((lat, lng) => {
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        setMapAddress(results[0].formatted_address);
+      }
+    });
+  }, []);
+
+  const onPlaceSelected = () => {
+    const place = autocompleteRef.current.getPlace();
+    if (place.geometry) {
+      const newPos = {
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng()
+      };
+      setMapLocation(newPos);
+      setMapAddress(place.formatted_address);
+      mapRef.current?.panTo(newPos);
+    }
+  };
+
+  const onMarkerDragEnd = (e) => {
+    const newPos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+    setMapLocation(newPos);
+    reverseGeocode(newPos.lat, newPos.lng);
+  };
+
+  const [addresses, setAddresses] = useState([
+    { id: 1, type: 'Home', address: 'B-402, Skyline Residency, Sector 44, Gurgaon, HR - 122003', location: { lat: 28.4595, lng: 77.0266 } },
+    { id: 2, type: 'Work', address: 'Tower C, Cyber Hub, Phase 3, Gurgaon, HR - 122018', location: { lat: 28.4895, lng: 77.0866 } }
+  ]);
   const [selectedAddress, setSelectedAddress] = useState(addresses[0]);
+
+  const confirmMapAddress = () => {
+    const newAddr = { id: Date.now(), type: 'Pinned', address: mapAddress, location: mapLocation };
+    setAddresses(prev => [newAddr, ...prev]);
+    setSelectedAddress(newAddr);
+    setShowMapPicker(false);
+    setShowAddressPicker(false);
+  };
 
   const [promoCode, setPromoCode] = useState('');
   const [isPromoApplied, setIsPromoApplied] = useState(false);
@@ -184,6 +238,42 @@ const CartPage = () => {
     }
   };
 
+  const handlePlaceOrder = async () => {
+    try {
+      const orderData = {
+        customerId: localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4567', // Dummy if not logged in
+        items: cartItems.map(item => ({
+          serviceId: item.id,
+          name: item.name,
+          quantity: quantities[item.id],
+          price: getItemPrice(item),
+          unit: billingUnits[item.id]
+        })),
+        pickupSlot: {
+          date: selectedPickup,
+          time: pickupTime
+        },
+        deliverySlot: {
+          date: selectedDelivery,
+          time: deliveryTime
+        },
+        address: selectedAddress.address,
+        location: selectedAddress.location,
+        totalAmount: finalTotal
+      };
+
+      const response = await orderApi.createOrder(orderData);
+      if (response._id) {
+        // Clear cart
+        localStorage.removeItem('cart_quantities');
+        navigate('/user/confirmation', { state: { order: response } });
+      }
+    } catch (err) {
+      console.error('Order Error:', err);
+      alert('Error placing order. Please try again.');
+    }
+  };
+
   return (
     <motion.div 
       initial="hidden"
@@ -213,14 +303,14 @@ const CartPage = () => {
                     className="bg-white rounded-3xl p-5 md:p-6 flex items-center justify-between shadow-sm border border-outline-variant/10 group"
                   >
                     <div className="flex items-center gap-5">
-                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-${item.color}-container flex items-center justify-center text-${item.color} shadow-sm group-hover:shadow-lg transition-shadow`}>
+                      <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm group-hover:shadow-lg transition-shadow`}>
                         <span className="material-symbols-outlined text-3xl md:text-3xl">
                           {item.icon}
                         </span>
                       </div>
                       <div>
-                        <h3 className="font-headline font-black text-[15px] md:text-lg text-on-surface leading-tight">{item.title}</h3>
-                        <p className="text-on-surface-variant text-[11px] md:text-xs font-bold opacity-60 mt-0.5">{item.desc}</p>
+                        <h3 className="font-headline font-black text-[15px] md:text-lg text-on-surface leading-tight">{item.name}</h3>
+                        <p className="text-on-surface-variant text-[11px] md:text-xs font-bold opacity-60 mt-0.5">{item.description}</p>
                         <div className="mt-3 flex flex-wrap items-center gap-4">
                           <div className="flex items-center bg-surface-container-low rounded-2xl p-1 w-fit shadow-xs border border-outline-variant/5">
                             <motion.button 
@@ -492,7 +582,7 @@ const CartPage = () => {
                 <span className="material-symbols-outlined text-primary text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>info</span>
                 <p className="text-[9px] font-bold text-primary italic leading-relaxed">Only 5% will be charged upon pickup. The remaining balance (95%) is payable only after your clothes are ready and verified.</p>
               </div>
-              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => navigate('/user/confirmation')} className="w-full mt-12 bg-primary-gradient text-on-primary font-headline font-black py-5.5 rounded-2xl md:text-lg uppercase tracking-widest shadow-2xl shadow-primary/30 flex items-center justify-center gap-3">
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handlePlaceOrder} className="w-full mt-12 bg-primary-gradient text-on-primary font-headline font-black py-5.5 rounded-2xl md:text-lg uppercase tracking-widest shadow-2xl shadow-primary/30 flex items-center justify-center gap-3">
                 Place Order
                 <span className="material-symbols-outlined text-2xl">arrow_forward</span>
               </motion.button>
@@ -535,7 +625,21 @@ const CartPage = () => {
             <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="fixed bottom-0 left-0 right-0 max-w-2xl mx-auto bg-white rounded-t-[3rem] p-10 z-[151] shadow-2xl">
               <div className="w-16 h-1.5 bg-outline-variant/20 rounded-full mx-auto mb-8" />
               <h3 className="text-3xl font-black tracking-tighter mb-8 shrink-0">Select Locale</h3>
-              <div className="space-y-4 mb-8">
+              <div className="space-y-4 mb-8 max-h-[40vh] overflow-y-auto pr-2">
+                <button 
+                  onClick={() => setShowMapPicker(true)}
+                  className="w-full p-6 rounded-[2rem] flex items-center gap-5 border-2 border-dashed border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg shadow-primary/20">
+                    <span className="material-symbols-outlined">map</span>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-black text-sm uppercase leading-none mb-1">Pin on Map</p>
+                    <p className="text-[10px] font-bold opacity-60">Use GPS for precise location</p>
+                  </div>
+                  <span className="material-symbols-outlined ml-auto">chevron_right</span>
+                </button>
+
                 {addresses.map((addr) => (
                   <button key={addr.id} onClick={() => { setSelectedAddress(addr); setShowAddressPicker(false); }} className={`w-full p-6 rounded-[2rem] flex items-center justify-between border-2 transition-all ${selectedAddress.id === addr.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-surface-container-low border-transparent'}`}>
                     <div className="flex items-center gap-5">
@@ -550,6 +654,100 @@ const CartPage = () => {
                 ))}
               </div>
               <button onClick={() => navigate('/user/profile/addresses')} className="w-full py-5 bg-surface-container-highest rounded-2xl font-black text-[10px] uppercase tracking-widest">Manage Addresses</button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showMapPicker && isLoaded && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md z-[200]" />
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 30, stiffness: 300 }} className="fixed inset-x-0 bottom-0 top-10 md:top-20 bg-white rounded-t-[3rem] z-[201] flex flex-col overflow-hidden">
+               <div className="bg-white p-6 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-black tracking-tighter">Pin Location</h3>
+                    <p className="text-[10px] font-bold text-on-surface-variant opacity-60 uppercase tracking-widest mt-1">Drag marker to exact spot</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => {
+                        navigator.geolocation.getCurrentPosition((pos) => {
+                          const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                          setMapLocation(newPos);
+                          reverseGeocode(newPos.lat, newPos.lng);
+                          mapRef.current?.panTo(newPos);
+                        });
+                      }}
+                      className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-primary/20"
+                    >
+                      <span className="material-symbols-outlined text-sm">my_location</span>
+                      Current
+                    </button>
+                    <button onClick={() => setShowMapPicker(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100"><span className="material-symbols-outlined text-lg">close</span></button>
+                  </div>
+               </div>
+
+               <div className="flex-1 relative">
+                 <Autocomplete 
+                   onLoad={(ref) => autocompleteRef.current = ref}
+                   onPlaceChanged={onPlaceSelected}
+                 >
+                   <div className="absolute top-6 left-6 right-6 z-10">
+                      <div className="bg-white/90 backdrop-blur-xl p-2 rounded-2xl shadow-2xl border border-white flex items-center gap-3">
+                         <span className="material-symbols-outlined text-primary ml-3">search</span>
+                         <input 
+                           type="text" 
+                           placeholder="Search area, colony or apartment..." 
+                           className="flex-1 bg-transparent border-none focus:ring-0 p-3 text-sm font-bold placeholder:opacity-40"
+                         />
+                      </div>
+                   </div>
+                 </Autocomplete>
+
+                 <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={mapLocation}
+                    zoom={15}
+                    onLoad={(map) => mapRef.current = map}
+                    options={{
+                      disableDefaultUI: true,
+                      zoomControl: true,
+                    }}
+                 >
+                    <Marker 
+                      position={mapLocation}
+                      draggable={true}
+                      onDragEnd={onMarkerDragEnd}
+                    />
+                 </GoogleMap>
+               </div>
+
+               <div className="p-8 bg-white border-t border-slate-100 space-y-6">
+                  <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                    <span className="material-symbols-outlined text-primary">location_on</span>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Selected Location</p>
+                      <p className="text-xs font-bold text-on-surface leading-normal">{mapAddress || 'Finding address...'}</p>
+                    </div>
+                  </div>
+                  
+                  <textarea 
+                    value={mapAddress}
+                    onChange={(e) => setMapAddress(e.target.value)}
+                    placeholder="Add Floor/House No/Landmark..."
+                    className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs font-bold focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all outline-none resize-none"
+                    rows="2"
+                  />
+
+                  <button 
+                    onClick={confirmMapAddress}
+                    className="w-full py-5 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
+                  >
+                    Confirm & Use This Address
+                    <span className="material-symbols-outlined">check_circle</span>
+                  </button>
+               </div>
             </motion.div>
           </>
         )}

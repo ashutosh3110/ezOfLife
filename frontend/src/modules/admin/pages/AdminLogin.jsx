@@ -1,125 +1,161 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Lock, Mail, ChevronRight, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [phone, setPhone] = useState('');
+    const [otpChannel, setOtpChannel] = useState('WhatsApp'); // 'WhatsApp' or 'SMS'
+    const [apiError, setApiError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError('');
-
-        // Mock auth logic
-        setTimeout(() => {
-            if (email === 'admin@ezoflife.com' && password === 'admin123') {
-                localStorage.setItem('adminAuth', 'true');
-                navigate('/admin/dashboard');
-            } else {
-                setError('Invalid credentials. Please try again.');
-                setIsLoading(false);
-            }
-        }, 800);
-    };
+    const isLoginValid = phone.length === 10 && /^\d+$/.test(phone);
 
     const containerVariants = useMemo(() => ({
         hidden: { opacity: 0, y: 20 },
+        visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: { 
+                duration: 0.5,
+                staggerChildren: 0.05
+            }
+        },
+        exit: {
+            opacity: 0,
+            y: -20,
+            transition: { duration: 0.3 }
+        }
+    }), []);
+
+    const itemVariants = useMemo(() => ({
+        hidden: { opacity: 0, y: 15 },
         visible: { opacity: 1, y: 0 }
     }), []);
 
+    const otpChannels = useMemo(() => [
+        { id: 'WhatsApp', icon: 'chat', color: 'text-green-600' },
+        { id: 'SMS', icon: 'sms', color: 'text-primary' }
+    ], []);
+
+    const handleRequestOtp = async (e) => {
+        e.preventDefault();
+        if (!isLoginValid) return;
+        
+        setIsLoading(true);
+        setApiError('');
+
+        try {
+            const response = await authApi.requestOtp(phone, otpChannel, 'login', 'Admin');
+            if (response.message === 'OTP sent successfully') {
+                navigate('/admin/otp', { state: { phone, channel: otpChannel } });
+            } else {
+                setApiError(response.message || 'Access Denied');
+                setIsLoading(false);
+            }
+        } catch (err) {
+            setApiError('Authorization system error.');
+            setIsLoading(false);
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden font-sans">
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] -mr-48 -mt-48 animate-pulse"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] -ml-48 -mb-48"></div>
+        <div className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden">
+            {/* Hero Visual Section */}
+            <div className="relative h-[25dvh] min-h-[220px] w-full overflow-hidden flex items-center justify-center">
+                <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary-container/30 rounded-full blur-[80px]"></div>
+                <div className="absolute top-40 -right-20 w-96 h-96 bg-tertiary-container/20 rounded-full blur-[100px]"></div>
+                <motion.div 
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                    className="z-10 text-center px-8"
+                >
+                    <h1 className="font-headline font-black text-[2.5rem] md:text-[3.5rem] text-primary leading-none tracking-tight mb-2 uppercase italic">Ez Control</h1>
+                    <p className="font-label text-on-surface-variant uppercase tracking-[0.2em] text-[10px] font-bold">Administrative Command Hub</p>
+                </motion.div>
+                <div className="absolute bottom-0 w-full h-24 bg-gradient-to-t from-background to-transparent"></div>
+            </div>
 
-            <motion.div 
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-                transition={{ duration: 0.6 }}
-                className="w-full max-w-md relative z-10"
-            >
-                <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 p-10 rounded-2xl shadow-2xl">
-                    <div className="flex flex-col items-center mb-10 text-center">
-                        <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
-                            <ShieldCheck size={32} className="text-white" />
-                        </div>
-                        <h1 className="text-2xl font-black text-white uppercase tracking-widest">Ez of Life Admin</h1>
-                        <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Command Hub Authorization</p>
+            {/* Auth Container */}
+            <main className="flex-grow px-6 -mt-6 relative z-20 pb-12">
+                <div className="max-w-md mx-auto">
+                    {/* Title */}
+                    <div className="flex items-center justify-center mb-8">
+                        <span className="font-headline text-2xl font-black text-on-background uppercase italic tracking-tighter">Login Access</span>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Secure Email</label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
-                                    <Mail size={18} />
-                                </div>
-                                <input 
-                                    type="email" 
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@ezoflife.com"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
-                                    required
-                                />
+                    {/* Auth Card */}
+                    <motion.div 
+                        initial="hidden"
+                        animate="visible"
+                        variants={containerVariants}
+                        className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_40px_60px_rgba(47,50,58,0.08)] border border-outline-variant/5"
+                    >
+                        <div className="space-y-10">
+                            <motion.div variants={itemVariants}>
+                                <h2 className="font-headline text-3xl font-black mb-3 text-on-surface leading-tight">Welcome Commander</h2>
+                                <p className="text-on-surface-variant text-[11px] font-bold uppercase tracking-widest opacity-60 leading-relaxed">
+                                    Secure verification required for administrative privileges.
+                                </p>
+                            </motion.div>
+
+                            <div className="space-y-8">
+                                {/* Channel Picker */}
+                                <motion.div variants={itemVariants} className="flex bg-surface-container-high rounded-[1.75rem] p-1.5 border border-outline-variant/10">
+                                    {otpChannels.map(({ id, icon, color }) => (
+                                        <button
+                                            key={id}
+                                            onClick={() => setOtpChannel(id)}
+                                            className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-[1.25rem] transition-all duration-300 ${otpChannel === id ? 'bg-white shadow-xl shadow-black/5 text-on-surface' : 'text-on-surface/40 hover:text-on-surface'}`}
+                                        >
+                                            <span className={`material-symbols-outlined text-[20px] ${otpChannel === id ? color : ''}`}>
+                                                {icon}
+                                            </span>
+                                            <span className="font-headline text-[10px] font-black uppercase tracking-[0.2em]">
+                                                {id}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </motion.div>
+
+                                {/* Phone Input */}
+                                <motion.div variants={itemVariants} className="relative group">
+                                    <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] mb-4 ml-1 opacity-60">Authorized Phone</label>
+                                    <div className="flex items-center bg-surface-container-low rounded-[1.75rem] p-1.5 border border-slate-300 transition-all focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20">
+                                        <div className="px-6 font-black text-on-surface text-sm opacity-40">+91</div>
+                                        <input
+                                            className="w-full bg-transparent border-none focus:ring-0 py-4.5 px-2 text-on-surface font-black text-md placeholder:text-on-surface/20 placeholder:font-medium outline-none tracking-widest"
+                                            placeholder="000 000 0000"
+                                            type="tel"
+                                            maxLength={10}
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                                        />
+                                    </div>
+                                </motion.div>
+
+                                {apiError && (
+                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] text-error font-bold text-center uppercase tracking-widest animate-pulse">
+                                        {apiError}
+                                    </motion.p>
+                                )}
+
+                                <motion.button
+                                    variants={itemVariants}
+                                    whileTap={isLoginValid ? { scale: 0.98 } : {}}
+                                    onClick={handleRequestOtp}
+                                    disabled={!isLoginValid || isLoading}
+                                    className={`w-full font-headline font-black py-6 rounded-2xl shadow-2xl tracking-[0.2em] uppercase text-[10px] transition-all duration-300 ${isLoginValid ? 'bg-primary text-on-primary shadow-primary/20 hover:scale-[1.02]' : 'bg-surface-container-high text-on-surface/20 cursor-not-allowed opacity-50'}`}
+                                >
+                                    {isLoading ? 'Decrypting Access...' : 'Authenticate Admin'}
+                                </motion.button>
                             </div>
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Encrypted Access Key</label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors">
-                                    <Lock size={18} />
-                                </div>
-                                <input 
-                                    type="password" 
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-slate-700/50 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        {error && (
-                            <motion.p 
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="text-rose-400 text-[10px] font-bold uppercase tracking-widest text-center"
-                            >
-                                {error}
-                            </motion.p>
-                        )}
-
-                        <button 
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
-                        >
-                            {isLoading ? 'Decrypting Access...' : (
-                                <>
-                                    Authorize Access
-                                    <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <div className="mt-8 pt-8 border-t border-slate-700/30 text-center">
-                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
-                            Secure Cluster Access Environment
-                        </p>
-                    </div>
+                    </motion.div>
                 </div>
-            </motion.div>
+            </main>
         </div>
     );
 };

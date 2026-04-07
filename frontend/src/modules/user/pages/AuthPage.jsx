@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -10,6 +11,7 @@ const AuthPage = () => {
   const [signupPhone, setSignupPhone] = useState('');
   const [otpChannel, setOtpChannel] = useState('WhatsApp'); // 'WhatsApp' or 'SMS'
   const [agreedToTnC, setAgreedToTnC] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
   const isSignupValid = signupPhone.length === 10 && /^\d+$/.test(signupPhone) && agreedToTnC;
@@ -145,12 +147,30 @@ const AuthPage = () => {
                       <motion.button 
                         variants={itemVariants}
                         whileTap={isLoginValid ? { scale: 0.98 } : {}}
-                        onClick={() => isLoginValid && navigate('/user/otp')}
+                        onClick={async () => {
+                          if (isLoginValid) {
+                            setApiError('');
+                            try {
+                              const response = await authApi.requestOtp(loginPhone, otpChannel, 'login', 'Customer');
+                              if (response.message === 'OTP sent successfully') {
+                                navigate('/user/otp', { state: { phone: loginPhone, channel: otpChannel } });
+                              } else {
+                                setApiError(response.message || 'Something went wrong');
+                              }
+                            } catch (error) {
+                              setApiError('Server error. Please try again later.');
+                            }
+                          }
+                        }}
                         disabled={!isLoginValid}
                         className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs transition-all duration-300 ${isLoginValid ? 'bg-primary-gradient text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                       >
                         Send Code
                       </motion.button>
+                      
+                      {apiError && isLogin && (
+                        <p className="text-[10px] text-error font-black text-center mt-2 animate-pulse">{apiError}</p>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -211,12 +231,30 @@ const AuthPage = () => {
                       <motion.button 
                         variants={itemVariants}
                         whileTap={isSignupValid ? { scale: 0.98 } : {}}
-                        onClick={() => isSignupValid && navigate('/user/otp')}
+                        onClick={async () => {
+                          if (isSignupValid) {
+                            setApiError('');
+                            try {
+                              const response = await authApi.requestOtp(signupPhone, otpChannel, 'signup', 'Customer');
+                              if (response.message === 'OTP sent successfully') {
+                                navigate('/user/otp', { state: { phone: signupPhone, channel: otpChannel } });
+                              } else {
+                                setApiError(response.message || 'Something went wrong');
+                              }
+                            } catch (error) {
+                              setApiError('Server error. Please try again later.');
+                            }
+                          }
+                        }}
                         disabled={!isSignupValid}
                         className={`w-full font-headline font-black py-5 rounded-2xl shadow-xl tracking-widest uppercase text-xs mt-4 transition-all duration-300 ${isSignupValid ? 'bg-gradient-to-br from-primary to-primary-container text-on-primary shadow-primary/20' : 'bg-surface-container-high text-outline-variant cursor-not-allowed opacity-50'}`}
                       >
                         Create Account
                       </motion.button>
+
+                      {apiError && !isLogin && (
+                        <p className="text-[10px] text-error font-black text-center mt-4 animate-pulse">{apiError}</p>
+                      )}
                     </div>
                   </div>
                 )}

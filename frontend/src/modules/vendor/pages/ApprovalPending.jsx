@@ -1,26 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const ApprovalPending = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [status, setStatus] = useState('pending'); // pending, approved, rejected
+    
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
+    const phone = location.state?.phone || vendorData.phone;
 
     useEffect(() => {
-        // Mocking current vendor as V001
-        const checkStatus = () => {
-            const savedStatus = localStorage.getItem('vendorStatus_V001');
-            if (savedStatus) {
-                setStatus(savedStatus);
-                if (savedStatus === 'approved') {
-                    setTimeout(() => navigate('/vendor/dashboard'), 1500);
+        if (!phone) return;
+
+        const checkStatus = async () => {
+            try {
+                const res = await authApi.getStatus(phone);
+                if (res.status !== status) {
+                    setStatus(res.status);
+                    if (res.status === 'approved') {
+                        // After approval, update local storage and redirect
+                        const updatedData = { ...vendorData, status: 'approved' };
+                        localStorage.setItem('vendorData', JSON.stringify(updatedData));
+                        setTimeout(() => navigate('/vendor/dashboard'), 1500);
+                    }
                 }
+            } catch (err) {
+                console.error('Polling error:', err);
             }
         };
 
-        const interval = setInterval(checkStatus, 2000);
+        checkStatus(); // Immediate check
+        const interval = setInterval(checkStatus, 3000);
         return () => clearInterval(interval);
-    }, [navigate]);
+    }, [navigate, phone, status, vendorData]);
 
     return (
         <motion.div 

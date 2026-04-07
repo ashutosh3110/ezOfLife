@@ -1,20 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { GoogleMap, useJsApiLoader, Marker, StandaloneSearchBox } from '@react-google-maps/api';
+import { authApi } from '../../../lib/api';
+
+const libraries = ['places'];
+const mapContainerStyle = { width: '100%', height: '100%' };
+const defaultCenter = { lat: 28.4595, lng: 77.0266 }; // Gurgaon
 
 const ProfileCreationPage = () => {
     const navigate = useNavigate();
     const [name, setName] = useState('');
     const [address, setAddress] = useState('');
     const [isLocating, setIsLocating] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [showMapPicker, setShowMapPicker] = useState(false);
 
-    const handleGetLocation = () => {
-        setIsLocating(true);
-        // Mock GPS location fetch
-        setTimeout(() => {
-            setAddress('249 Editorial Ave, Pristine Heights, NY 10012');
-            setIsLocating(false);
-        }, 1500);
+    // Map States
+    const [mapLocation, setMapLocation] = useState(defaultCenter);
+    const [mapAddress, setMapAddress] = useState('');
+    const searchBoxRef = useRef(null);
+
+    const { isLoaded } = useJsApiLoader({
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+        libraries
+    });
+
+    const riderId = localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4569'; 
+
+    const reverseGeocode = async (lat, lng) => {
+        if (!window.google) return;
+        const geocoder = new window.google.maps.Geocoder();
+        try {
+            const response = await geocoder.geocode({ location: { lat, lng } });
+            if (response.results[0]) {
+                setMapAddress(response.results[0].formatted_address);
+            }
+        } catch (error) {
+            console.error('Geocoding failed:', error);
+        }
+    };
+
+    const handleMapConfirm = () => {
+        setAddress(mapAddress);
+        setShowMapPicker(false);
+    };
+
+    const onPlacesChanged = () => {
+        const places = searchBoxRef.current.getPlaces();
+        if (places && places.length > 0) {
+            const place = places[0];
+            const newPos = {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+            };
+            setMapLocation(newPos);
+            setMapAddress(place.formatted_address);
+        }
+    };
+
+    const handleMarkerDragEnd = (e) => {
+        const newPos = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+        setMapLocation(newPos);
+        reverseGeocode(newPos.lat, newPos.lng);
+    };
+
+    const handleUseCurrentLocation = () => {
+        if (navigator.geolocation) {
+            setIsLocating(true);
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const newPos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    setMapLocation(newPos);
+                    reverseGeocode(newPos.lat, newPos.lng);
+                    setIsLocating(false);
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    alert('Could not fetch location. Please enable GPS.');
+                    setIsLocating(false);
+                }
+            );
+        }
+    };
+
+    const handleLaunch = async () => {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+            navigate('/user/home');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            await authApi.updateProfile(userId, {
+                displayName: name,
+                address: address,
+                location: mapLocation,
+                isProfileComplete: true
+            });
+            // Update local storage if needed
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            localStorage.setItem('user', JSON.stringify({ ...user, displayName: name, isProfileComplete: true }));
+            
+            navigate('/user/home');
+        } catch (err) {
+            alert('Could not save profile: ' + err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const isComplete = name.trim().length >= 3 && address.trim().length > 10;
@@ -34,7 +131,7 @@ const ProfileCreationPage = () => {
     };
 
     return (
-        <div className="bg-background text-on-surface min-h-[100dvh] pb-10">
+        <div className="bg-background text-on-surface min-h-[100dvh] pb-10 overflow-x-hidden">
             <header className="px-6 pt-16 mb-10">
                 <motion.div 
                     initial={{ scale: 0.9, opacity: 0 }}
@@ -86,12 +183,11 @@ const ProfileCreationPage = () => {
                         <div className="flex justify-between items-center mb-3 px-1">
                             <label className="block font-label text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Home Address</label>
                             <button 
-                                onClick={handleGetLocation}
-                                disabled={isLocating}
+                                onClick={() => setShowMapPicker(true)}
                                 className="flex items-center gap-1.5 text-primary text-[9px] font-black uppercase tracking-widest"
                             >
-                                <span className={`material-symbols-outlined text-[14px] ${isLocating ? 'animate-spin' : ''}`}>my_location</span>
-                                {isLocating ? 'Locating...' : 'Use GPS'}
+                                <span className={`material-symbols-outlined text-[14px]`}>my_location</span>
+                                Use GPS
                             </button>
                         </div>
                         <div className="bg-white rounded-[2rem] p-5 border border-slate-300 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 transition-all">
@@ -113,18 +209,128 @@ const ProfileCreationPage = () => {
                     <motion.button 
                         variants={itemVariants}
                         whileTap={isComplete ? { scale: 0.98 } : {}}
-                        onClick={() => isComplete && navigate('/user/home')}
-                        disabled={!isComplete}
-                        className={`w-full py-5 rounded-[2rem] transition-all duration-300 font-headline font-black uppercase tracking-[0.2em] text-xs shadow-xl ${
+                        onClick={handleLaunch}
+                        disabled={!isComplete || isLoading}
+                        className={`w-full py-5 rounded-[2rem] transition-all duration-300 font-headline font-black uppercase tracking-[0.2em] text-xs shadow-xl flex items-center justify-center gap-2 ${
                             isComplete 
                             ? 'bg-primary-gradient text-on-primary shadow-primary/20' 
                             : 'bg-surface-container-high text-outline-variant opacity-50'
                         }`}
                     >
-                        Launch Experience
+                        {isLoading ? (
+                            <>
+                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Please wait...
+                            </>
+                        ) : 'Launch Experience'}
                     </motion.button>
                 </motion.div>
             </main>
+
+            {/* Map Picker Modal */}
+            <AnimatePresence>
+                {showMapPicker && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: '100%' }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: '100%' }}
+                        className="fixed inset-0 z-[100] bg-white flex flex-col pt-safe"
+                    >
+                        {/* Map Header */}
+                        <div className="p-6 bg-white border-b border-slate-100 flex items-center justify-between shadow-sm z-10">
+                            <div className="flex items-center gap-3">
+                                <button 
+                                    onClick={() => setShowMapPicker(false)}
+                                    className="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center active:scale-90"
+                                >
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                                <h3 className="font-black text-slate-900 uppercase tracking-widest text-[10px]">Verify Pickup Spot</h3>
+                            </div>
+                            <button 
+                                onClick={handleMapConfirm}
+                                className="px-5 py-3 bg-primary text-on-primary rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 active:scale-95 transition-all"
+                            >
+                                Confirm Location
+                            </button>
+                        </div>
+
+                        {/* Search Overlay */}
+                        <div className="p-4 absolute top-24 left-0 right-0 z-20">
+                            <div className="max-w-md mx-auto">
+                                {isLoaded && (
+                                    <StandaloneSearchBox
+                                        onLoad={ref => searchBoxRef.current = ref}
+                                        onPlacesChanged={onPlacesChanged}
+                                    >
+                                        <div className="relative group">
+                                            <input 
+                                                type="text" 
+                                                placeholder="Enter colony or landmark..."
+                                                className="w-full bg-white px-6 py-4 rounded-[2rem] shadow-2xl border border-slate-100 outline-none text-sm font-bold focus:ring-4 focus:ring-primary/10"
+                                            />
+                                            <span className="material-symbols-outlined absolute right-6 top-1/2 -translate-y-1/2 text-primary transition-transform group-focus-within:scale-125">search</span>
+                                        </div>
+                                    </StandaloneSearchBox>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Interactive Map */}
+                        <div className="flex-grow bg-slate-100 relative">
+                            {isLoaded ? (
+                                <GoogleMap
+                                    mapContainerStyle={mapContainerStyle}
+                                    center={mapLocation}
+                                    zoom={15}
+                                    options={{
+                                        disableDefaultUI: true,
+                                        styles: [{ featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }]
+                                    }}
+                                >
+                                    <Marker 
+                                        position={mapLocation} 
+                                        draggable={true} 
+                                        onDragEnd={handleMarkerDragEnd}
+                                    />
+                                </GoogleMap>
+                            ) : (
+                                <div className="h-full flex items-center justify-center gap-3">
+                                    <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                                    <p className="text-[10px] font-black text-on-surface-variant tracking-widest uppercase">Loading Radar...</p>
+                                </div>
+                            )}
+
+                            {/* Map Floating Actions */}
+                            <div className="absolute bottom-10 left-6 right-6 flex flex-col gap-4">
+                                <button 
+                                    onClick={handleUseCurrentLocation}
+                                    className="self-end w-14 h-14 bg-white rounded-2xl shadow-2xl border border-slate-100 flex items-center justify-center text-primary active:scale-90 transition-transform"
+                                >
+                                    <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>my_location</span>
+                                </button>
+                                
+                                <motion.div 
+                                    initial={{ y: 20, opacity: 0 }}
+                                    animate={{ y: 0, opacity: 1 }}
+                                    className="bg-slate-900/95 backdrop-blur-lg p-6 rounded-[2.5rem] shadow-2xl border border-white/10"
+                                >
+                                    <div className="flex gap-4 items-start mb-2">
+                                        <div className="w-10 h-10 rounded-2xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
+                                            <span className="material-symbols-outlined text-xl">location_on</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Pickup Address</p>
+                                            <p className="text-sm font-bold text-white leading-tight opacity-90 line-clamp-2 italic">{mapAddress || 'Move marker to pick address'}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-[8px] font-black text-primary/60 uppercase tracking-[0.2em] text-center mt-4">Drag marker to specify your gate/block</p>
+                                </motion.div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Visual Accents */}
             <div className="fixed -bottom-20 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-[80px] pointer-events-none"></div>

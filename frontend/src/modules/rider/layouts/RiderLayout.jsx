@@ -39,8 +39,8 @@ const RiderBottomNav = () => {
 const RiderLayout = () => {
     const location = useLocation();
     
-    // Hide nav on specific pages like Task Details if needed
-    const showNav = !location.pathname.includes('/rider/task/');
+    // Hide nav on specific pages
+    const showNav = !location.pathname.includes('/rider/task/') && !location.pathname.includes('/rider/auth') && !location.pathname.includes('/rider/otp');
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-50">

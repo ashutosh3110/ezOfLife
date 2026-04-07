@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   TrendingUp, 
   IndianRupee, 
@@ -22,6 +22,7 @@ import {
   ComposedChart, Bar, Line, LineChart
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { adminApi } from '../../../lib/api';
 import { mockAdminData } from '../data/mockData';
 import MetricRow from '../components/cards/MetricRow';
 import PageHeader from '../components/common/PageHeader';
@@ -33,19 +34,32 @@ import ProfessionalTooltip from '../components/common/ProfessionalTooltip';
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [liveStats, setLiveStats] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await adminApi.getStats();
+        setLiveStats(res.stats);
+      } catch (err) {
+        console.error('Stats fetch error:', err);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const financialMetrics = useMemo(() => [
-    { label: 'Gross Merchandise (GMV)', value: '₹8,42,150', delta: '+14.2%', icon: TrendingUp, color: 'white' },
-    { label: 'Platform Net Yield', value: '₹1,26,322', delta: '15% Fee Base', icon: null, color: 'sky-400' },
-    { label: 'Logistics Disbursements', value: '₹64,280', delta: '12 Pending', icon: Clock, color: 'white' },
-    { label: 'Vendor Settlements', value: '₹6,51,548', delta: 'Cycle: Weekly', icon: null, color: 'white' }
-  ], []);
+    { label: 'Gross Merchandise (GMV)', value: `₹${(liveStats?.totalRevenue || 0).toLocaleString()}`, delta: '+14.2%', icon: TrendingUp, color: 'white' },
+    { label: 'Platform Net Yield', value: `₹${Math.floor((liveStats?.totalRevenue || 0) * 0.15).toLocaleString()}`, delta: '15% Fee Base', icon: null, color: 'sky-400' },
+    { label: 'Active Vendors', value: liveStats?.activeVendors || 0, delta: `${liveStats?.pendingApprovals || 0} Pending`, icon: Store, color: 'white' },
+    { label: 'Total Users', value: liveStats?.totalUsers || 0, delta: 'Verified', icon: UsersIcon, color: 'white' }
+  ], [liveStats]);
 
   const healthStats = useMemo(() => [
-    { label: 'API Latency', value: '42ms', icon: Cpu },
-    { label: 'Uptime', value: '99.98%', icon: Monitor },
-    { label: 'Load', value: 'Low (12.4%)', icon: Activity }
-  ], []);
+    { label: 'API Latency', value: '38ms', icon: Cpu },
+    { label: 'Uptime', value: '99.99%', icon: Monitor },
+    { label: 'Active Riders', value: liveStats?.totalRiders || 0, icon: Activity }
+  ], [liveStats]);
 
   const alerts = useMemo(() => [
     { id: 'EZ-9283', title: 'DELAYED PICKUP (>2HR)', type: 'CRITICAL', desc: 'Assigned to Marcus Chen · Delay: 142m', icon: Clock, variant: 'rose', action: '/admin/orders', actionLabel: 'Intercept' },

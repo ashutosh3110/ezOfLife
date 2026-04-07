@@ -1,17 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MASTER_SERVICES } from '../../../shared/data/sharedData';
+import { authApi, serviceApi } from '../../../lib/api';
 import VendorHeader from '../components/VendorHeader';
 
 const ServiceManagement = () => {
     const navigate = useNavigate();
-    const initialServices = useMemo(() => MASTER_SERVICES.map(s => ({
-        ...s,
-        active: true // Default all to active for now
-    })), []);
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const vendorId = JSON.parse(localStorage.getItem('user'))?.id;
 
-    const [services, setServices] = useState(initialServices);
+    const fetchConfig = async () => {
+        try {
+            setLoading(true);
+            const masterRes = await serviceApi.getAll();
+            const profileRes = await authApi.getProfile(vendorId);
+            
+            // Merge profile services with master if available, otherwise just use master
+            const vendorServices = profileRes.shopDetails?.services || [];
+            
+            const merged = masterRes.map(ms => {
+                const vs = vendorServices.find(v => v._id === ms._id || v.id === ms.id);
+                return {
+                    ...ms,
+                    active: vs ? vs.active : true,
+                    basePrice: vs ? vs.basePrice : ms.basePrice
+                };
+            });
+            
+            setServices(merged);
+        } catch (error) {
+            console.error('Error fetching services:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (vendorId) {
+            fetchConfig();
+        } else {
+            navigate('/user/auth');
+        }
+    }, [vendorId]);
 
     const toggleService = (idx) => {
         const newServices = [...services];
@@ -21,15 +52,28 @@ const ServiceManagement = () => {
 
     const updatePrice = (idx, price) => {
         const newServices = [...services];
-        newServices[idx].basePrice = price;
+        newServices[idx].basePrice = Number(price);
         setServices(newServices);
     };
 
-    const handleUpdate = () => {
-        // In a real app, save to backend
-        localStorage.setItem('vendor_services_V001', JSON.stringify(services));
-        alert('Services updated successfully!');
+    const handleUpdate = async () => {
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const profile = await authApi.getProfile(vendorId);
+            
+            const updatedShopDetails = {
+                ...profile.shopDetails,
+                services: services
+            };
+
+            await authApi.updateProfile(vendorId, { shopDetails: updatedShopDetails });
+            alert('Services updated successfully!');
+        } catch (error) {
+            console.error('Error updating services:', error);
+            alert('Failed to update services');
+        }
     };
+
 
     return (
         <motion.div 

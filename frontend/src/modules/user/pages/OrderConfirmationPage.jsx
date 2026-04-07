@@ -1,13 +1,22 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const OrderConfirmationPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const order = location.state?.order;
   const bgRef = useRef(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
+
+  // Redirect if no order in state
+  useEffect(() => {
+    if (!order) {
+      navigate('/user/cart');
+    }
+  }, [order, navigate]);
 
   useEffect(() => {
     const blobs = bgRef.current?.querySelectorAll('.blob');
@@ -38,10 +47,7 @@ const OrderConfirmationPage = () => {
     visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: "easeOut" } }
   }), []);
 
-  const serviceSummary = useMemo(() => [
-    { icon: 'local_laundry_service', title: 'Premium Wash & Fold', desc: 'Hypoallergenic • Scent-free', price: 99.00, color: 'primary' },
-    { icon: 'dry_cleaning', title: 'Silk Blouse (Eco-Dry)', desc: 'Special handling • Hanging', price: 149.00, color: 'tertiary' }
-  ], []);
+  const serviceSummary = useMemo(() => order?.items || [], [order]);
 
   return (
     <motion.div 
@@ -95,10 +101,10 @@ const OrderConfirmationPage = () => {
                 <div className="space-y-10">
                   <div className="group/item cursor-default">
                     <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1.5 opacity-60">Pickup Address</p>
-                    <p className="text-lg font-black leading-snug text-on-surface">249 Editorial Ave, Suite 4B<br/>Pristine Heights, NY 10012</p>
+                    <p className="text-lg font-black leading-snug text-on-surface">{order?.address || 'Address not found'}</p>
                     <p className="text-primary font-bold text-xs mt-2 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-sm">schedule</span>
-                      Tomorrow, 08:00 AM - 10:00 AM
+                      {order?.pickupSlot?.date}, {order?.pickupSlot?.time}
                     </p>
                   </div>
                   <div className="group/item cursor-default">
@@ -106,7 +112,7 @@ const OrderConfirmationPage = () => {
                     <p className="text-lg font-black leading-snug text-on-surface">Same as Pickup</p>
                     <p className="text-tertiary font-bold text-xs mt-2 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-sm">local_shipping</span>
-                      Friday, Oct 27, Evening
+                      {order?.deliverySlot?.date}, {order?.deliverySlot?.time}
                     </p>
                   </div>
                 </div>
@@ -117,22 +123,22 @@ const OrderConfirmationPage = () => {
             <motion.div variants={itemVariants} className="bg-surface-container-low p-8 rounded-[2.5rem] shadow-sm">
               <h3 className="font-headline text-xl font-black mb-8 tracking-tight">Service Summary</h3>
               <div className="space-y-4">
-                {serviceSummary.map((service, idx) => (
+                {serviceSummary.map((item, idx) => (
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.01 }}
                     className="flex items-center justify-between p-5 bg-white rounded-3xl shadow-xs border border-outline-variant/5"
                   >
                     <div className="flex items-center gap-5">
-                      <div className={`w-14 h-14 rounded-2xl bg-${service.color}-container/40 flex items-center justify-center text-${service.color}`}>
-                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>{service.icon}</span>
+                      <div className={`w-14 h-14 rounded-2xl bg-primary-container/40 flex items-center justify-center text-primary`}>
+                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_laundry_service</span>
                       </div>
                       <div>
-                        <p className="font-black text-on-surface text-[15px]">{service.title}</p>
-                        <p className="text-xs text-on-surface-variant font-bold opacity-60">{service.desc}</p>
+                        <p className="font-black text-on-surface text-[15px]">{item.name}</p>
+                        <p className="text-xs text-on-surface-variant font-bold opacity-60">{item.quantity} {item.unit || 'pcs'}</p>
                       </div>
                     </div>
-                    <p className="font-headline font-black text-primary">₹{service.price.toFixed(2)}</p>
+                    <p className="font-headline font-black text-primary">₹{(item.price * item.quantity).toFixed(2)}</p>
                   </motion.div>
                 ))}
               </div>
@@ -149,22 +155,14 @@ const OrderConfirmationPage = () => {
               
               <div className="space-y-5 mb-10">
                 <div className="flex justify-between text-sm md:text-md">
-                  <span className="text-on-surface-variant font-bold opacity-60">Subtotal</span>
-                  <span className="font-black text-on-surface">₹849.00</span>
-                </div>
-                <div className="flex justify-between text-sm md:text-md">
-                  <span className="text-on-surface-variant font-bold opacity-60">Service Fee</span>
-                  <span className="font-black text-on-surface">₹50.00</span>
-                </div>
-                <div className="flex justify-between text-sm md:text-md">
-                  <span className="text-on-surface-variant font-bold opacity-60">Express Delivery</span>
-                  <span className="font-black text-primary tracking-tighter uppercase text-xs">Complimentary</span>
+                  <span className="text-on-surface-variant font-bold opacity-60">Total Order Value</span>
+                  <span className="font-black text-on-surface">₹{order?.totalAmount?.toFixed(2)}</span>
                 </div>
                 
                 <div className="pt-8 mt-6 border-t border-outline-variant/10 flex justify-between items-end">
                   <div>
-                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-60">Total Amount</p>
-                    <p className="text-4xl md:text-5xl font-black text-primary leading-none tracking-tighter">₹899.00</p>
+                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-60">Payable Now (5%)</p>
+                    <p className="text-4xl md:text-5xl font-black text-primary leading-none tracking-tighter">₹{(order?.totalAmount * 0.05).toFixed(2)}</p>
                   </div>
                   <span className="material-symbols-outlined text-primary-container text-5xl mb-1 opacity-50">payments</span>
                 </div>
@@ -177,20 +175,16 @@ const OrderConfirmationPage = () => {
                 >
                   <span className="material-symbols-outlined text-on-surface-variant text-2xl">credit_card</span>
                   <div className="flex-grow">
-                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Payment</p>
-                    <p className="font-black text-on-surface text-sm">Apple Pay (•••• 9012)</p>
+                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Payment Mode</p>
+                    <p className="font-black text-on-surface text-sm">Cash on Pickup / COD</p>
                   </div>
-                  <span className="material-symbols-outlined text-primary text-xl group-hover:translate-x-1 transition-transform">chevron_right</span>
                 </motion.div>
 
                 <motion.button 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
-                    addNotification('order_placed', 'Order Confirmed', 'Your laundry request #EZ-8821 has been successfully queued.', 'user');
-                    addNotification('order_placed', 'New Order #EZ-8821', 'A new laundry request is available for pickup in HSR Layout.', 'rider');
-                    addNotification('order_placed', 'Incoming Order #EZ-8821', 'New Premium Wash & Fold order received. Preparing for intake.', 'vendor');
-                    navigate('/user/payment');
+                    navigate('/user/success', { state: { order } });
                   }}
                   className="w-full py-6 rounded-2xl bg-primary-gradient text-on-primary font-headline font-black text-xl shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 uppercase tracking-widest"
                 >

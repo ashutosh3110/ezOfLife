@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const OrderDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const addNotification = useNotificationStore((state) => state.addNotification);
 
     const orderId = id || 'EZ-8821';
 
@@ -219,8 +217,6 @@ const OrderDetails = () => {
                     <motion.button 
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
-                            addNotification('processing', 'Cleaning Complete', 'Your order #EZ-8821 has been processed and is being packed.', 'user');
-                            addNotification('ready', 'Order Ready #EZ-8821', 'Pick up ready at Heritage Cleaners for final delivery.', 'rider');
                             navigate(`/vendor/rider-verification/${orderId}`);
                         }}
                         className="flex-1 h-14 rounded-2xl vendor-gradient text-white font-black text-sm uppercase tracking-[0.15em] shadow-lg shadow-primary/20 flex items-center justify-center gap-3"

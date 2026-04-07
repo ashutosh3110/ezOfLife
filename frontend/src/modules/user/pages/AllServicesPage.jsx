@@ -1,26 +1,35 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { serviceApi } from '../../../lib/api';
 
 const AllServicesPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const services = useMemo(() => [
-    { id: 'wash_fold', title: 'Wash & Fold', desc: 'Everyday wear, scented & stacked', icon: 'local_laundry_service', color: 'primary', price: '₹99/kg' },
-    { id: 'dry_clean', title: 'Dry Cleaning', desc: 'Suits, Silks & delicate fabrics', icon: 'dry_cleaning', color: 'tertiary', price: '₹149/pc' },
-    { id: 'ironing', title: 'Premium Ironing', desc: 'Crisp finish, steam pressed', icon: 'iron', color: 'secondary', price: '₹15/pc' },
-    { id: 'shoe_clean', title: 'Shoe Spa', desc: 'Deep clean & restoration', icon: 'checkroom', color: 'primary', price: '₹299/pair' },
-    { id: 'bag_care', title: 'Bag Care', desc: 'Leather conditioning & cleaning', icon: 'work', color: 'tertiary', price: '₹499/pc' },
-    { id: 'curtain_wash', title: 'Curtain Wash', desc: 'Dust removal & steam refresh', icon: 'window', color: 'secondary', price: '₹199/panel' },
-    { id: 'carpet_wash', title: 'Carpet Wash', desc: 'Industrial grade deep cleaning', icon: 'layers', color: 'primary', price: '₹49/sqft' },
-    { id: 'blanket_wash', title: 'Comforter Care', desc: 'Duvets, blankets & quilts', icon: 'bed', color: 'tertiary', price: '₹249/pc' }
-  ], []);
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const data = await serviceApi.getAll();
+      setServices(data.filter(s => s.status === 'Active'));
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const filteredServices = useMemo(() => services.filter(service => 
-    service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.desc.toLowerCase().includes(searchQuery.toLowerCase())
+    service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
   ), [services, searchQuery]);
+
 
   const containerVariants = useMemo(() => ({
     hidden: { opacity: 0 },
@@ -83,9 +92,19 @@ const AllServicesPage = () => {
           className="grid grid-cols-1 md:grid-cols-2 gap-5"
         >
           <AnimatePresence mode="popLayout">
-            {filteredServices.map((service) => (
+            {loading ? (
+              [...Array(6)].map((_, i) => (
+                <div key={i} className="h-32 bg-white rounded-[2.5rem] p-7 border border-outline-variant/10 shadow-sm animate-pulse flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                    <div className="h-3 bg-slate-100 rounded w-full" />
+                  </div>
+                </div>
+              ))
+            ) : filteredServices.map((service) => (
               <motion.div 
-                key={service.id}
+                key={service._id}
                 layout
                 variants={itemVariants}
                 initial="hidden"
@@ -93,17 +112,28 @@ const AllServicesPage = () => {
                 exit={{ opacity: 0, scale: 0.95 }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/user/service-info', { state: { selectedService: service } })}
+                onClick={() => navigate('/user/service-info', { state: { selectedService: { 
+                  id: service._id, 
+                  title: service.name, 
+                  desc: service.description, 
+                  image: service.image, 
+                  color: 'primary', 
+                  price: `₹${service.basePrice}/${service.unit}` 
+                } } })}
                 className="bg-white rounded-[2.5rem] p-7 border border-outline-variant/10 shadow-sm flex items-center justify-between group cursor-pointer hover:shadow-xl hover:shadow-primary/5 transition-all"
               >
                 <div className="flex items-center gap-6">
-                  <div className={`w-16 h-16 rounded-2xl bg-${service.color}-container/50 flex items-center justify-center text-${service.color} group-hover:bg-${service.color} group-hover:text-white transition-colors`}>
-                    <span className="material-symbols-outlined text-3xl">{service.icon}</span>
+                  <div className={`w-16 h-16 rounded-2xl bg-primary-container/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors overflow-hidden`}>
+                    {service.image ? (
+                        <img src={service.image} alt={service.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="material-symbols-outlined text-3xl">local_laundry_service</span>
+                    )}
                   </div>
                   <div>
-                    <h3 className="font-headline font-black text-lg text-on-surface leading-tight mb-1">{service.title}</h3>
-                    <p className="text-on-surface-variant text-[11px] font-bold opacity-60 leading-relaxed">{service.desc}</p>
-                    <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest">{service.price}</div>
+                    <h3 className="font-headline font-black text-lg text-on-surface leading-tight mb-1">{service.name}</h3>
+                    <p className="text-on-surface-variant text-[11px] font-bold opacity-60 leading-relaxed line-clamp-1">{service.description}</p>
+                    <div className="mt-2 text-[10px] font-black text-primary uppercase tracking-widest">₹{service.basePrice}/{service.unit}</div>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-all opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0">chevron_right</span>
@@ -111,6 +141,7 @@ const AllServicesPage = () => {
             ))}
           </AnimatePresence>
         </motion.div>
+
 
         {filteredServices.length === 0 && (
           <motion.div 

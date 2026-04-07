@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import gsap from 'gsap';
 
 const SuccessPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const order = location.state?.order || { _id: 'PENDING', totalAmount: 0 };
   const bgRef = useRef(null);
 
   useEffect(() => {
@@ -100,11 +102,11 @@ const SuccessPage = () => {
           <div className="flex justify-between items-center border-b border-outline-variant/10 pb-5">
             <div className="text-left">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Order ID</span>
-              <p className="font-headline font-black text-lg text-primary">#EZ-8829-01</p>
+              <p className="font-headline font-black text-lg text-primary">#EZ-{order._id?.toString().slice(-6).toUpperCase() || '8829-01'}</p>
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase tracking-widest text-on-surface-variant font-black opacity-60">Total Amount</span>
-              <p className="font-headline font-black text-lg text-on-surface">₹899.00</p>
+              <p className="font-headline font-black text-lg text-on-surface">₹{order.totalAmount || '899.00'}</p>
             </div>
           </div>
           

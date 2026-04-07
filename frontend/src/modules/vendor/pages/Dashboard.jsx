@@ -1,49 +1,81 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import VendorHeader from '../components/VendorHeader';
+import { orderApi } from '../../../lib/api';
+import useNotificationStore from '../../../shared/stores/notificationStore';
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Available');
     const [isOnline, setIsOnline] = useState(true);
+    const [allOrders, setAllOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { fetchNotifications } = useNotificationStore();
 
-    const initialOrders = useMemo(() => ({
-        'Available': [
-            { id: "EZ-8821", title: "Premium Wash & Fold", desc: "Estimated: 12.5 kg · Mixed Fabrics", dist: "0.8 km away", icon: "dry_cleaning" },
-            { id: "EZ-8824", title: "Eco-Friendly Dry Clean", desc: "5 Items · 2 Suits, 3 Silk Shirts", dist: "2.4 km away", icon: "checkroom" },
-            { id: "EZ-8825", title: "Ironing Only", desc: "15 Cotton Shirts · Starch Preferred", dist: "1.5 km away", icon: "iron" },
-        ],
-        'In Progress': [
-            { id: "EZ-8815", title: "Heavy Duty Wash", desc: "8 kg · Bed Linens & Towels", dist: "Processing (45%)", icon: "local_laundry_service" },
-            { id: "EZ-8816", title: "Delicate Silk Care", desc: "2 Items · Evening Gowns", dist: "Ironing Stage", icon: "opacity" },
-        ],
-        'Ready': [
-            { id: "EZ-8810", title: "Quick Wash", desc: "3 kg · Gym Wear", dist: "Ready for Pickup", icon: "shopping_basket" },
-            { id: "EZ-8808", title: "Blanket Sterilization", desc: "2 Large Blankets", dist: "Out for Delivery", icon: "sanitizer" },
-        ]
-    }), []);
+    const vendorId = localStorage.getItem('userId') || '66112c3f8e4b8a2e5c8b4568';
+
+    const fetchAllData = async () => {
+        try {
+            await Promise.all([
+                fetchOrders(),
+                fetchNotifications(vendorId, 'vendor')
+            ]);
+        } catch (err) {
+            console.error('Fetch error:', err);
+        }
+    };
+
+    const fetchOrders = async () => {
+        try {
+            const res = await orderApi.getVendorOrders(vendorId);
+            setAllOrders(res);
+        } catch (err) {
+            console.error('Fetch orders error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAllData();
+        const interval = setInterval(fetchAllData, 15000); // Poll every 15s
+        return () => clearInterval(interval);
+    }, []);
+
+    const categorizedOrders = useMemo(() => {
+        return {
+            'Available': allOrders.filter(o => o.status === 'Assigned'),
+            'In Progress': allOrders.filter(o => ['Picked Up', 'In Progress'].includes(o.status)),
+            'Ready': allOrders.filter(o => ['Ready', 'Out for Delivery', 'Delivered'].includes(o.status))
+        };
+    }, [allOrders]);
 
     const dashboardStats = useMemo(() => [
-        { label: 'Earnings Today', value: '₹1,420', change: '12% vs yesterday', trend: 'up', variant: 'surface' },
-        { label: 'Process Queue', value: '08', subValue: '4 Ready for Delivery', variant: 'primary' }
-    ], []);
+        { label: 'Earnings Today', value: '₹0', change: 'Keep it up!', trend: 'up', variant: 'surface' },
+        { label: 'Process Queue', value: categorizedOrders['In Progress'].length.toString().padStart(2, '0'), subValue: `${categorizedOrders['Ready'].length} Ready for Delivery`, variant: 'primary' }
+    ], [categorizedOrders]);
 
-    const [orders, setOrders] = useState(initialOrders);
     const [selectedOrderForReady, setSelectedOrderForReady] = useState(null);
 
-    const markAsReady = (order) => {
-        const newOrders = { ...orders };
-        // Remove from In Progress
-        newOrders['In Progress'] = newOrders['In Progress'].filter(o => o.id !== order.id);
-        // Add to Ready
-        newOrders['Ready'] = [
-            { ...order, dist: "Ready for Pickup" }, 
-            ...newOrders['Ready']
-        ];
-        setOrders(newOrders);
-        setSelectedOrderForReady(null);
-        alert(`Order ${order.id} marked as READY. Return rider dispatched!`);
+    const markAsReady = async (order) => {
+        try {
+            await orderApi.updateOrderStatus(order._id, 'Ready');
+            fetchOrders(); // Refresh
+            setSelectedOrderForReady(null);
+            alert(`Order ${order.orderId} marked as READY. Return rider notified!`);
+        } catch (err) {
+            alert('Error updating status');
+        }
+    };
+
+    const startProcessing = async (order) => {
+        try {
+            await orderApi.updateOrderStatus(order._id, 'In Progress');
+            fetchOrders();
+        } catch (err) {
+            alert('Error starting process');
+        }
     };
 
     return (
@@ -181,7 +213,7 @@ const Dashboard = () => {
                     <div className="flex items-center justify-between px-1">
                         <div className="flex flex-col">
                             <h3 className="text-sm font-black text-on-background uppercase tracking-widest italic">Order Workflow</h3>
-                            {orders['In Progress'].length > 5 && (
+                            {categorizedOrders['In Progress'].length > 5 && (
                                 <div className="flex items-center gap-1.5 mt-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
                                     <span className="text-[7px] font-black text-rose-500 uppercase tracking-widest">Active Rush: High Throughput</span>
@@ -197,7 +229,7 @@ const Dashboard = () => {
                                 >
                                     {tab === 'In Progress' ? 'Active' : tab === 'Ready' ? 'Done' : 'New'}
                                     <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[7px] font-black tabular-nums transition-colors ${activeTab === tab ? 'bg-primary text-white shadow-sm' : 'bg-slate-200 text-slate-500'}`}>
-                                        {orders[tab].length}
+                                        {categorizedOrders[tab].length}
                                     </span>
                                 </button>
                             ))}
@@ -207,32 +239,47 @@ const Dashboard = () => {
 
                     <div className="space-y-4">
                         <AnimatePresence mode="popLayout">
-                            {orders[activeTab].map((order) => (
+                            {categorizedOrders[activeTab].map((order) => (
                                 <motion.div 
-                                    key={order.id}
+                                    key={order._id}
                                     layout
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     className="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-4 cursor-pointer hover:border-[#3D5AFE]/20 transition-all"
                                 >
-                                    <div className="flex items-center gap-5" onClick={() => navigate(`/vendor/order/${order.id}`)}>
+                                    <div className="flex items-center gap-5" onClick={() => navigate(`/vendor/order/${order._id}`)}>
                                         <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400">
-                                            <span className="material-symbols-outlined text-[24px]">{order.icon}</span>
+                                            <span className="material-symbols-outlined text-[24px]">local_laundry_service</span>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between mb-0.5">
-                                                <h4 className="text-sm font-bold text-on-surface truncate">{order.title}</h4>
-                                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">#{order.id}</span>
+                                                <h4 className="text-sm font-bold text-on-surface truncate">{order.items[0]?.name} {order.items.length > 1 ? `+${order.items.length - 1}` : ''}</h4>
+                                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{order.orderId}</span>
                                             </div>
-                                            <p className="text-xs text-on-surface-variant font-medium mb-3 truncate">{order.desc}</p>
+                                            <p className="text-xs text-on-surface-variant font-medium mb-3 truncate">{order.customer?.displayName || 'Customer'}</p>
                                             <div className="flex items-center gap-2">
-                                                <span className="material-symbols-outlined text-[14px] text-outline-variant">location_on</span>
-                                                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{order.dist}</span>
+                                                <span className="material-symbols-outlined text-[14px] text-outline-variant">schedule</span>
+                                                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">{order.status}</span>
                                             </div>
                                         </div>
                                         <span className="material-symbols-outlined text-outline-variant/30 text-[18px]">chevron_right</span>
                                     </div>
+
+                                    {activeTab === 'Available' && (
+                                         <div className="pt-2">
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    startProcessing(order);
+                                                }}
+                                                className="w-full py-3.5 rounded-2xl bg-primary text-white font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">local_shipping</span>
+                                                Accept Pickup
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {activeTab === 'In Progress' && (
                                         <div className="pt-2">
@@ -250,6 +297,12 @@ const Dashboard = () => {
                                     )}
                                 </motion.div>
                             ))}
+                            {categorizedOrders[activeTab].length === 0 && (
+                                <div className="py-20 text-center opacity-30">
+                                    <span className="material-symbols-outlined text-6xl mb-4">inventory_2</span>
+                                    <p className="text-[11px] font-black uppercase tracking-widest">No orders in this flow.</p>
+                                </div>
+                            )}
                         </AnimatePresence>
                     </div>
                 </section>

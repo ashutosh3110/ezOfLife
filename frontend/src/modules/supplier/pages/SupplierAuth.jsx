@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const SupplierAuth = () => {
     const navigate = useNavigate();
@@ -9,6 +10,7 @@ const SupplierAuth = () => {
     const [loginPhone, setLoginPhone] = useState('');
     const [registerCompany, setRegisterCompany] = useState('');
     const [registerPhone, setRegisterPhone] = useState('');
+    const [apiError, setApiError] = useState('');
 
     const isLoginValid = loginPhone.length === 10 && /^\d+$/.test(loginPhone);
     const isRegisterValid = registerCompany.length >= 3 && registerPhone.length === 10 && /^\d+$/.test(registerPhone);
@@ -110,12 +112,29 @@ const SupplierAuth = () => {
                                             <motion.button
                                                 variants={itemVariants}
                                                 whileTap={isLoginValid ? { scale: 0.98 } : {}}
-                                                onClick={() => isLoginValid && navigate('/supplier/otp')}
+                                                onClick={async () => {
+                                                    if (isLoginValid) {
+                                                        setApiError('');
+                                                        try {
+                                                            const response = await authApi.requestOtp(loginPhone, 'WhatsApp', 'login', 'Supplier');
+                                                            if (response.message === 'OTP sent successfully') {
+                                                                navigate('/supplier/otp', { state: { phone: loginPhone, channel: 'WhatsApp' } });
+                                                            } else {
+                                                                setApiError(response.message || 'Error');
+                                                            }
+                                                        } catch (err) {
+                                                            setApiError('Server error');
+                                                        }
+                                                    }
+                                                }}
                                                 disabled={!isLoginValid}
                                                 className={`w-full font-headline font-black py-6 rounded-2xl shadow-xl tracking-[0.2em] uppercase text-[10px] transition-all duration-300 ${isLoginValid ? 'bg-primary text-on-primary shadow-primary/20' : 'bg-surface-container-high text-on-surface/20 cursor-not-allowed opacity-40'}`}
                                             >
                                                 Authenticate Source
                                             </motion.button>
+                                            {apiError && isLogin && (
+                                                <p className="text-[10px] text-error font-black text-center mt-2 animate-pulse">{apiError}</p>
+                                            )}
                                         </div>
                                     </div>
                                 ) : (
@@ -158,12 +177,29 @@ const SupplierAuth = () => {
                                             <motion.button
                                                 variants={itemVariants}
                                                 whileTap={isRegisterValid ? { scale: 0.98 } : {}}
-                                                onClick={() => isRegisterValid && navigate('/supplier/otp')}
+                                                onClick={async () => {
+                                                    if (isRegisterValid) {
+                                                        setApiError('');
+                                                        try {
+                                                            const response = await authApi.requestOtp(registerPhone, 'WhatsApp', 'signup', 'Supplier');
+                                                            if (response.message === 'OTP sent successfully') {
+                                                                navigate('/supplier/otp', { state: { phone: registerPhone, channel: 'WhatsApp', company: registerCompany } });
+                                                            } else {
+                                                                setApiError(response.message || 'Error');
+                                                            }
+                                                        } catch (err) {
+                                                            setApiError('Server error');
+                                                        }
+                                                    }
+                                                }}
                                                 disabled={!isRegisterValid}
                                                 className={`w-full font-headline font-black py-6 rounded-2xl shadow-xl tracking-[0.2em] uppercase text-[10px] mt-4 transition-all duration-300 ${isRegisterValid ? 'bg-primary text-on-primary shadow-primary/20' : 'bg-surface-container-high text-on-surface/20 cursor-not-allowed opacity-40'}`}
                                             >
                                                 Submit Partnership Request
                                             </motion.button>
+                                            {apiError && !isLogin && (
+                                                <p className="text-[10px] text-error font-black text-center mt-4 animate-pulse">{apiError}</p>
+                                            )}
                                         </div>
                                     </div>
                                 )}

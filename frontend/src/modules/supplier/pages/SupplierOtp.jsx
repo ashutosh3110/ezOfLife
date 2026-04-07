@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const SupplierOtp = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { phone } = location.state || { phone: '98765 43210' };
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [timer, setTimer] = useState(30);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (timer > 0) {
@@ -41,12 +45,24 @@ const SupplierOtp = () => {
         }
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         setIsLoading(true);
-        setTimeout(() => {
-            // Redirect to Supplier Dashboard
-            navigate('/supplier/dashboard');
-        }, 1500);
+        setError('');
+        try {
+            const fullOtp = otp.join('');
+            const response = await authApi.verifyOtp(phone, fullOtp);
+            if (response.token) {
+                localStorage.setItem('supplierToken', response.token);
+                localStorage.setItem('supplierData', JSON.stringify(response.user));
+                navigate('/supplier/dashboard');
+            } else {
+                setError(response.message || 'Invalid OTP');
+                setIsLoading(false);
+            }
+        } catch (err) {
+            setError('Verification failed');
+            setIsLoading(false);
+        }
     };
 
     const isComplete = useMemo(() => otp.every(v => v !== ''), [otp]);
@@ -69,9 +85,11 @@ const SupplierOtp = () => {
                 </div>
 
                 <h1 className="font-headline font-black text-3xl mb-3 tracking-tighter uppercase italic text-primary">B2B Verify</h1>
-                <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest leading-loose mb-10 opacity-60">
+                <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest leading-loose mb-1 opacity-60">
                     The 6-digit code has been sent to your registered partner channel.
                 </p>
+                <p className="text-sm font-black text-primary mb-6">+91 {phone}</p>
+                {error && <p className="text-[10px] text-error font-bold mb-4 animate-pulse">{error}</p>}
 
                 <div className="flex gap-2.5 justify-center mb-10">
                     {otp.map((digit, i) => (

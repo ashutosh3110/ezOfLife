@@ -5,13 +5,30 @@ import { mockAdminData } from '../data/mockData';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
 import StatusBadge from '../components/common/StatusBadge';
+import { orderApi } from '../../../lib/api';
 
 export default function Orders() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All');
-  const tabs = useMemo(() => ['All', 'In Progress', 'Ready', 'Delivered', 'Cancelled'], []);
+  const [allOrders, setAllOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const allOrders = useMemo(() => mockAdminData.recentOrders, []);
+  const tabs = useMemo(() => ['All', 'Assigned', 'In Progress', 'Ready', 'Delivered', 'Cancelled'], []);
+
+  const fetchAllOrders = async () => {
+    try {
+      const res = await orderApi.getAllOrders();
+      setAllOrders(res);
+    } catch (err) {
+      console.error('Fetch all orders error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllOrders();
+  }, []);
 
   const filteredOrders = useMemo(() => {
     if (activeTab === 'All') return allOrders;
@@ -21,23 +38,23 @@ export default function Orders() {
   const orderColumns = useMemo(() => [
     { 
       header: 'Order ID', 
-      key: 'id',
+      key: 'orderId',
       render: (val, row) => (
         <div className="flex flex-col">
           <span className="font-bold text-slate-900 text-[11px] tracking-[0.1em] uppercase leading-none mb-1 group-hover:text-blue-600 transition-colors">{val}</span>
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-80 tabular-nums">{row.service} Service</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] opacity-80 tabular-nums">Service Request</span>
         </div>
       )
     },
     { 
       header: 'Customer', 
-      key: 'user',
+      key: 'customer',
       render: (val) => (
         <div className="flex items-center gap-2 transition-transform">
           <div className="w-6 h-6 rounded-sm bg-slate-50 text-slate-400 flex items-center justify-center border border-slate-200 text-[8px] font-bold uppercase">
-            ID
+            {val?.displayName?.charAt(0) || 'U'}
           </div>
-          <span className="font-bold text-slate-800 text-[10px] uppercase tracking-tight">{val}</span>
+          <span className="font-bold text-slate-800 text-[10px] uppercase tracking-tight">{val?.displayName || 'Unknown'}</span>
         </div>
       )
     },
@@ -49,15 +66,15 @@ export default function Orders() {
           <div className="w-6 h-6 rounded-sm bg-slate-950 text-white flex items-center justify-center border border-slate-800 text-[8px] font-bold uppercase">
              <Store size={10} />
           </div>
-          <span className="font-bold text-slate-700 text-[10px] uppercase tracking-tighter tabular-nums">{val}</span>
+          <span className="font-bold text-slate-700 text-[10px] uppercase tracking-tighter tabular-nums">{val?.shopDetails?.name || 'Unassigned'}</span>
         </div>
       )
     },
     { 
       header: 'Amount', 
-      key: 'amount', 
+      key: 'totalAmount', 
       align: 'right', 
-      render: (val) => <span className="font-bold text-slate-900 tabular-nums text-xs">₹{val.toLocaleString()}</span> 
+      render: (val) => <span className="font-bold text-slate-900 tabular-nums text-xs">₹{val?.toLocaleString() || 0}</span> 
     },
     { 
       header: 'Status', 
@@ -66,8 +83,8 @@ export default function Orders() {
     },
     { 
       header: 'Date', 
-      key: 'date', 
-      render: (val) => <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest tabular-nums opacity-60 flex items-center gap-2"><ArrowRight size={10} className="text-slate-200" /> {val}</span> 
+      key: 'createdAt', 
+      render: (val) => <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest tabular-nums opacity-60 flex items-center gap-2"><ArrowRight size={10} className="text-slate-200" /> {new Date(val).toLocaleDateString()}</span> 
     }
   ], []);
 

@@ -6,6 +6,11 @@ import VendorHeader from '../components/VendorHeader';
 const VendorProfile = () => {
     const navigate = useNavigate();
 
+    const handleSignOut = () => {
+        localStorage.clear();
+        navigate('/vendor/auth');
+    };
+
     const menuItems = useMemo(() => [
         { icon: 'edit', label: 'Edit Profile', path: '/vendor/edit-profile' },
         { icon: 'location_on', label: 'Shop Address', path: '/vendor/register' },
@@ -95,7 +100,10 @@ const VendorProfile = () => {
 
                 {/* Action Row */}
                 <div className="flex gap-4">
-                    <button className="flex-1 bg-white border border-outline-variant/10 p-4 rounded-2xl flex items-center justify-center gap-2 group hover:bg-red-50 hover:border-red-100 transition-all">
+                    <button 
+                        onClick={handleSignOut}
+                        className="flex-1 bg-white border border-outline-variant/10 p-4 rounded-2xl flex items-center justify-center gap-2 group hover:bg-red-50 hover:border-red-100 transition-all"
+                    >
                         <span className="material-symbols-outlined text-on-surface-variant/30 group-hover:text-red-500 text-[18px]">logout</span>
                         <span className="text-xs font-bold text-on-surface-variant group-hover:text-red-600 uppercase tracking-widest">Sign Out</span>
                     </button>

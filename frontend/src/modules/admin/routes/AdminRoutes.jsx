@@ -12,6 +12,7 @@ import Services from '../pages/Services';
 import Users from '../pages/Users';
 import Analytics from '../pages/Analytics';
 import AdminLogin from '../pages/AdminLogin';
+import AdminOtp from '../pages/AdminOtp';
 import AdminOrderDetail from '../pages/AdminOrderDetail';
 import AdminVendorDetail from '../pages/AdminVendorDetail';
 import PricingConfig from '../pages/PricingConfig';
@@ -37,6 +38,7 @@ const AdminRoutes = () => {
     <Routes>
       {/* Public Admin Routes */}
       <Route path="/login" element={<AdminLogin />} />
+      <Route path="/otp" element={<AdminOtp />} />
 
       {/* Protected Admin Routes */}
       <Route 

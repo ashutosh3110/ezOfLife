@@ -1,14 +1,69 @@
-import React, { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const DocumentUpload = () => {
     const navigate = useNavigate();
+    const locationState = useLocation();
+    const registrationData = locationState.state || {};
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
+    const [files, setFiles] = useState({
+        id: null,
+        biz: null
+    });
 
     const uploadRequirements = useMemo(() => [
         { id: 'id', title: "Government ID", desc: "Driver's License, Aadhaar, or Passport", icon: "id_card", delay: 0.2 },
         { id: 'biz', title: "Business proof", desc: "GST Registration, Trade License, or Lease", icon: "description", delay: 0.3 }
     ], []);
+
+    const handleFileSelect = (id, file) => {
+        if (file) {
+            setFiles(prev => ({ ...prev, [id]: file }));
+        }
+    };
+
+    const handleSubmit = async () => {
+        if (!files.id || !files.biz) {
+            return setError('Please upload both required documents');
+        }
+
+        setIsSubmitting(true);
+        setError('');
+        
+        try {
+            const formData = new FormData();
+            formData.append('phone', registrationData.phone);
+            formData.append('shopName', registrationData.shopName);
+            formData.append('address', registrationData.address);
+            formData.append('gst', registrationData.gst || '');
+            
+            // Complex objects must be stringified for Multipart/FormData
+            formData.append('location', JSON.stringify(registrationData.location));
+            formData.append('services', JSON.stringify(registrationData.services));
+
+            // Append actual file blobs
+            formData.append('idCard', files.id);
+            formData.append('businessProof', files.biz);
+
+            const response = await authApi.completeVendorProfile(formData);
+
+            if (response.message.includes('successfully')) {
+                localStorage.setItem(`vendorStatus_${registrationData.phone}`, 'pending');
+                navigate('/vendor/approval-pending', { state: { phone: registrationData.phone } });
+            } else {
+                setError(response.message || 'Submission failed');
+            }
+        } catch (err) {
+            console.error('Final Registration Error:', err);
+            setError('Server error during submission');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <motion.div 
@@ -17,139 +72,128 @@ const DocumentUpload = () => {
             className="bg-surface font-body text-on-surface min-h-screen"
         >
             {/* TopAppBar */}
-            <motion.header 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="bg-surface/70 backdrop-blur-xl sticky top-0 z-50 flex justify-between items-center w-full px-6 py-4"
-            >
+            <header className="bg-white px-6 py-4 flex items-center justify-between sticky top-0 z-50 border-b border-slate-100">
                 <div className="flex items-center gap-4">
-                    <motion.button 
-                        whileTap={{ scale: 0.9 }}
+                    <button 
                         onClick={() => navigate(-1)} 
-                        className="p-2 hover:bg-surface-container-low transition-colors duration-300 rounded-full cursor-pointer"
+                        className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-50 transition-colors"
                     >
-                        <span className="material-symbols-outlined text-on-surface">arrow_back</span>
-                    </motion.button>
-                    <h1 className="font-headline font-bold text-headline-sm tracking-tight text-on-surface">Registration</h1>
+                        <span className="material-symbols-outlined text-slate-600">arrow_back</span>
+                    </button>
+                    <h1 className="text-lg font-bold tracking-tight">Registration</h1>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/10 shadow-inner">
-                        <span className="material-symbols-outlined text-primary font-bold">description</span>
-                    </div>
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center border border-white shadow-sm">
+                    <span className="material-symbols-outlined text-primary font-bold">description</span>
                 </div>
-            </motion.header>
+            </header>
 
-            <motion.main 
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1 }}
-                className="max-w-4xl mx-auto px-6 pt-12 pb-32"
-            >
-                {/* Progress Stepper (Step 2 Active) */}
-                <div className="mb-12 flex items-center justify-between">
-                    <div className="flex-1 opacity-60">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-primary/20 text-primary rounded-full flex items-center justify-center font-bold">1</div>
-                            <div>
-                                <p className="text-label-md uppercase tracking-widest font-bold text-on-surface-variant">Step 1</p>
-                                <h2 className="font-headline font-bold text-headline-sm tracking-tight opacity-50">Shop Details</h2>
-                            </div>
-                        </div>
+            <main className="max-w-xl mx-auto px-6 py-12 pb-32">
+                {/* Compact Stepper */}
+                <div className="flex items-center justify-between px-2 mb-12">
+                    <div className="flex items-center gap-3 opacity-40">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold">1</div>
+                        <span className="text-sm font-medium text-slate-500">Shop Details</span>
                     </div>
-                    <div className="w-24 h-1.5 bg-surface-container-low rounded-full mx-4 overflow-hidden">
+                    <div className="flex-1 mx-4 h-[2px] bg-slate-200 relative">
                         <motion.div 
-                            initial={{ width: '40%' }}
+                            initial={{ width: '50%' }}
                             animate={{ width: '100%' }}
-                            transition={{ duration: 1, delay: 0.5 }}
-                            className="h-full vendor-gradient rounded-full"
+                            className="absolute inset-y-0 bg-primary"
                         />
                     </div>
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 vendor-gradient text-white rounded-full flex items-center justify-center font-bold shadow-lg shadow-primary/20 scale-110">2</div>
-                            <div>
-                                <p className="text-label-md uppercase tracking-widest font-bold text-primary">Step 2</p>
-                                <h2 className="font-headline font-bold text-headline-sm tracking-tight">Documents</h2>
-                            </div>
-                        </div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-primary/20">2</div>
+                        <span className="text-sm font-bold text-primary">Verification</span>
                     </div>
                 </div>
 
                 {/* Upload Cards Section */}
-                <div className="space-y-12">
-                     <p className="text-body-lg text-on-surface-variant font-medium max-w-lg leading-relaxed mb-4">
-                        Please upload clear, legible photos of your business certifications and personal identification for verification.
-                    </p>
+                <div className="space-y-8">
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black tracking-tight text-on-surface">Confirm Identity</h2>
+                        <p className="text-sm font-medium text-on-surface-variant leading-relaxed">
+                            Upload clear photos of your business certifications and identity for verification.
+                        </p>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-6">
                         {uploadRequirements.map(req => (
                             <UploadCard 
                                 key={req.id}
                                 title={req.title} 
                                 desc={req.desc} 
-                                icon={req.icon} 
-                                delay={req.delay}
+                                icon={files[req.id] ? "check_circle" : req.icon} 
+                                isSelected={!!files[req.id]}
+                                onSelect={(file) => handleFileSelect(req.id, file)}
                             />
                         ))}
                     </div>
 
-                    <div className="bg-primary/5 p-8 rounded-2xl border border-primary/10 flex items-start gap-6 relative overflow-hidden group">
-                        <div className="absolute -right-6 -bottom-6 opacity-5 rotate-12 transition-transform duration-700 group-hover:scale-110">
-                            <span className="material-symbols-outlined text-[120px]">verified_user</span>
+                    <div className="bg-primary/5 p-6 rounded-3xl border border-primary/10 flex items-start gap-4">
+                        <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+                            <span className="material-symbols-outlined text-[24px]">verified</span>
                         </div>
-                        <div className="p-4 bg-primary rounded-xl text-white shadow-lg shadow-primary/20">
-                            <span className="material-symbols-outlined text-[28px] font-bold">verified</span>
-                        </div>
-                        <div className="relative z-10 flex-1">
-                            <h3 className="font-headline text-xl font-extrabold text-on-surface mb-2 tracking-tight">Security & Privacy</h3>
-                            <p className="text-sm font-medium text-on-surface-variant leading-relaxed font-body">
-                                Your documents are processed through our encrypted private vault and are only visible to the verification team.
+                        <div>
+                            <h3 className="text-sm font-bold text-on-surface mb-1">Encrypted Vault</h3>
+                            <p className="text-[10px] font-medium text-on-surface-variant leading-relaxed">
+                                Your documents are processed through our secure vault and are only visible to the verification team.
                             </p>
                         </div>
                     </div>
                 </div>
 
                 {/* Submit Action Section */}
-                <div className="mt-20 flex flex-col items-center gap-8">
-                    <motion.button 
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => navigate('/vendor/approval-pending')}
-                        className="w-full md:w-[450px] py-6 vendor-gradient text-on-primary font-headline text-xl font-bold rounded-2xl shadow-2xl shadow-primary/30 transition-all flex items-center justify-center gap-4 active:scale-[0.98]"
-                    >
-                        Submit Application
-                        <span className="material-symbols-outlined text-[24px]">cloud_upload</span>
-                    </motion.button>
-                    
-                    <div className="flex items-center gap-4 text-on-surface-variant opacity-40 font-bold text-label-md uppercase tracking-widest scale-90">
-                        <span className="material-symbols-outlined text-sm">lock</span>
-                        End-to-end Encrypted
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-surface/80 backdrop-blur-xl border-t border-slate-100 z-50">
+                    <div className="max-w-xl mx-auto space-y-4">
+                        {error && <p className="text-center text-rose-500 font-bold text-[10px] uppercase tracking-widest">{error}</p>}
+                        
+                        <motion.button 
+                            whileTap={{ scale: 0.98 }}
+                            disabled={isSubmitting}
+                            onClick={handleSubmit}
+                            className={`w-full py-5 rounded-2xl ${isSubmitting ? 'bg-slate-200 text-slate-400' : 'bg-primary text-white shadow-xl shadow-primary/20'} font-black text-lg flex items-center justify-center gap-3 transition-all`}
+                        >
+                            {isSubmitting ? 'Submitting Application...' : 'Finish Registration'}
+                            <span className="material-symbols-outlined text-[20px]">
+                                {isSubmitting ? 'sync' : 'arrow_forward'}
+                            </span>
+                        </motion.button>
                     </div>
                 </div>
-            </motion.main>
+            </main>
         </motion.div>
     );
 };
 
-const UploadCard = ({ title, desc, icon, delay }) => (
-    <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay }}
-        whileHover={{ y: -8, shadow: "0 25px 35px -12px rgb(0 0 0 / 0.15)" }}
-        className="bg-surface-container-low p-10 rounded-2xl border-2 border-dashed border-outline-variant/30 hover:border-primary/40 hover:bg-white transition-all flex flex-col items-center text-center group cursor-pointer"
-    >
-        <div className="w-20 h-20 vendor-gradient rounded-full flex items-center justify-center text-white mb-8 shadow-xl shadow-primary/20 rotate-12 transition-transform duration-500 group-hover:rotate-0">
-            <span className="material-symbols-outlined text-[36px] font-bold">{icon}</span>
+const UploadCard = ({ title, desc, icon, isSelected, onSelect }) => {
+    const fileInputRef = useRef(null);
+
+    return (
+        <div 
+            onClick={() => fileInputRef.current?.click()}
+            className={`p-8 rounded-[2rem] border-2 border-dashed transition-all cursor-pointer flex flex-col items-center text-center gap-4 ${isSelected ? 'bg-primary/5 border-primary text-primary shadow-lg shadow-primary/5' : 'bg-white border-slate-100 text-on-surface-variant hover:border-primary/30'}`}
+        >
+            <input 
+                type="file" 
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => onSelect(e.target.files[0])}
+            />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${isSelected ? 'bg-primary text-white' : 'bg-slate-50 text-slate-300'}`}>
+                <span className="material-symbols-outlined text-[32px]">{icon}</span>
+            </div>
+            <div>
+                <h3 className="text-lg font-bold tracking-tight mb-1">{title}</h3>
+                <p className="text-[11px] font-medium opacity-60 leading-relaxed max-w-[150px] mx-auto">{desc}</p>
+            </div>
+            {isSelected && (
+                <div className="px-4 py-1.5 bg-primary/10 rounded-full text-[9px] font-black uppercase tracking-widest">
+                    File Selected
+                </div>
+            )}
         </div>
-        <h3 className="font-headline text-xl font-bold text-on-surface mb-3 tracking-tight">{title}</h3>
-        <p className="text-sm text-on-surface-variant font-medium leading-relaxed max-w-[180px] mb-8">{desc}</p>
-        
-        <div className="w-full h-12 rounded-xl bg-surface-container-high flex items-center justify-center border border-outline-variant/10 text-primary font-extrabold text-sm uppercase tracking-widest gap-2 group-hover:bg-primary-container/20 transition-all">
-            <span className="material-symbols-outlined text-sm">add</span>
-            Choose File
-        </div>
-    </motion.div>
-);
+    );
+};
 
 export default DocumentUpload;

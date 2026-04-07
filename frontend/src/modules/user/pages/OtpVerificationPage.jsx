@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const OtpVerificationPage = () => {
   const navigate = useNavigate();
-  const [otp, setOtp] = useState(['', '', '', '']);
+  const location = useLocation();
+  const { phone, channel } = location.state || { phone: '98765 43210', channel: 'SMS' };
+  
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(30);
+  const [error, setError] = useState('');
   const inputRefs = useRef([]);
 
   useEffect(() => {
@@ -23,7 +28,7 @@ const OtpVerificationPage = () => {
     setOtp(newOtp);
 
     // Auto-focus next input
-    if (value && index < 3) {
+    if (value && index < 5) {
       inputRefs.current[index + 1].focus();
     }
   };
@@ -34,9 +39,23 @@ const OtpVerificationPage = () => {
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (otp.every(digit => digit !== '')) {
-      navigate('/user/profile/create');
+      setError('');
+      try {
+        const fullOtp = otp.join('');
+        const response = await authApi.verifyOtp(phone, fullOtp);
+        
+        if (response.token) {
+          localStorage.setItem('token', response.token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          navigate('/user/profile/create');
+        } else {
+          setError(response.message || 'Invalid OTP');
+        }
+      } catch (err) {
+        setError('Verification failed. Try again.');
+      }
     }
   };
 
@@ -74,8 +93,9 @@ const OtpVerificationPage = () => {
             <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
           </div>
           <h1 className="text-3xl font-black tracking-tighter text-on-surface mb-3 leading-tight">Verification Code</h1>
-          <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">We've sent a 4-digit code to</p>
-          <p className="text-sm font-black text-primary mt-2 tracking-tight">+91 98765 43210</p>
+          <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">We've sent a 6-digit code to</p>
+          <p className="text-sm font-black text-primary mt-2 tracking-tight">+91 {phone}</p>
+          {error && <p className="text-[10px] text-error font-bold mt-3 animate-pulse">{error}</p>}
         </div>
 
         {/* OTP Inputs */}

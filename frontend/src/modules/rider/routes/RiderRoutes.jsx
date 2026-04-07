@@ -5,21 +5,27 @@ import RiderDashboard from '../pages/RiderDashboard';
 import RiderWallet from '../pages/RiderWallet';
 import TaskDetails from '../pages/TaskDetails';
 
-// Placeholder Pages
-const RiderProfile = () => <div className="p-10 font-black uppercase tracking-widest text-on-surface">Rider Profile</div>;
+import RiderAuth from '../pages/RiderAuth';
+import RiderOtp from '../pages/RiderOtp';
+import RiderProfile from '../pages/RiderProfile';
 
 const RiderRoutes = () => {
   return (
     <Routes>
       <Route element={<RiderLayout />}>
+        {/* Auth Flow */}
+        <Route path="/auth" element={<RiderAuth />} />
+        <Route path="/otp" element={<RiderOtp />} />
+
+        {/* Protected Routes */}
         <Route path="/dashboard" element={<RiderDashboard />} />
         <Route path="/task/:id" element={<TaskDetails />} />
         <Route path="/wallet" element={<RiderWallet />} />
         <Route path="/profile" element={<RiderProfile />} />
-        <Route path="/" element={<Navigate to="/rider/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/rider/auth" replace />} />
       </Route>
-      {/* Catch-all to redirect back to dashboard */}
-      <Route path="*" element={<Navigate to="/rider/dashboard" replace />} />
+      {/* Catch-all to redirect back to auth */}
+      <Route path="*" element={<Navigate to="/rider/auth" replace />} />
     </Routes>
   );
 };

@@ -1,10 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { authApi } from '../../../lib/api';
 
 const VendorOtp = () => {
     const navigate = useNavigate();
-    const [otp, setOtp] = useState(['', '', '', '']);
+    const location = useLocation();
+    const { phone } = location.state || { phone: '98765 43210' };
+    const [otp, setOtp] = useState(['', '', '', '', '', '']);
+    const [error, setError] = useState('');
 
     const otpKeys = useMemo(() => [1, 2, 3, 4, 5, 6, 7, 8, 9, '·', 0, 'del'], []);
 
@@ -18,6 +22,39 @@ const VendorOtp = () => {
         const last = otp.findLastIndex(v => v !== '');
         if (last !== -1) {
             const next = [...otp]; next[last] = ''; setOtp(next);
+        }
+    };
+
+    const handleVerify = async () => {
+        if (otp.every(v => v !== '')) {
+            setError('');
+            try {
+                const fullOtp = otp.join('');
+                const response = await authApi.verifyOtp(phone, fullOtp);
+                if (response.token) {
+                    const user = response.user;
+                    localStorage.setItem('vendorToken', response.token);
+                    localStorage.setItem('vendorData', JSON.stringify(user));
+
+                    if (user.role === 'Vendor') {
+                        if (user.status === 'pending') {
+                            return navigate('/vendor/approval-pending', { state: { phone } });
+                        }
+                        if (user.status === 'rejected') {
+                            return setError('Your application was rejected. Contact support.');
+                        }
+                        if (!user.isProfileComplete) {
+                            return navigate('/vendor/register', { state: { phone } });
+                        }
+                    }
+                    
+                    navigate('/vendor/dashboard');
+                } else {
+                    setError(response.message || 'Invalid OTP');
+                }
+            } catch (err) {
+                setError('Verification failed. Try again.');
+            }
         }
     };
 
@@ -51,7 +88,8 @@ const VendorOtp = () => {
                     {/* Title */}
                     <div className="text-center">
                         <h1 className="font-headline font-black text-2xl tracking-tighter text-on-surface mb-1">Verify your number</h1>
-                        <p className="text-on-surface-variant font-medium text-sm">We sent a 4-digit code to <strong className="text-primary">+91 98765 43210</strong></p>
+                        <p className="text-on-surface-variant font-medium text-sm">We sent a 6-digit code to <strong className="text-primary">+91 {phone}</strong></p>
+                        {error && <p className="text-[10px] text-error font-bold mt-2 animate-pulse">{error}</p>}
                     </div>
 
                     {/* OTP Boxes */}
@@ -63,7 +101,7 @@ const VendorOtp = () => {
                                     scale: digit ? 1.06 : 1,
                                 }}
                                 transition={{ type: "spring", stiffness: 300 }}
-                                className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black font-headline border-4 transition-all duration-300 ${
+                                className={`w-12 h-14 rounded-2xl flex items-center justify-center text-xl font-black font-headline border-4 transition-all duration-300 ${
                                     digit
                                         ? 'bg-primary/5 text-primary border-primary shadow-md shadow-primary/10'
                                         : 'bg-surface-container-high/40 text-on-surface-variant border-slate-300'
@@ -121,7 +159,7 @@ const VendorOtp = () => {
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => navigate('/vendor/dashboard')}
+                    onClick={handleVerify}
                     disabled={otp.some(v => v === '')}
                     className={`w-full max-w-xs h-14 rounded-2xl font-headline font-black text-base shadow-2xl transition-all flex items-center justify-center gap-3 ${
                         otp.every(v => v !== '')

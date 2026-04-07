@@ -1,22 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MASTER_SERVICES } from '../../../shared/data/sharedData';
+import { serviceApi } from '../../../lib/api';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTier, setSelectedTier] = useState('Essential'); // 'Essential' or 'Heritage'
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedQuantities, setSelectedQuantities] = useState(() => {
     // Initialize from localStorage if available
     const saved = localStorage.getItem('cart_quantities');
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Sync with localStorage
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      const data = await serviceApi.getAll();
+      setServices(data.filter(s => s.status === 'Active'));
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('cart_quantities', JSON.stringify(selectedQuantities));
-  }, [selectedQuantities]);
+    fetchServices();
+  }, []);
 
   const updateQuantity = (id, delta) => {
     setSelectedQuantities(prev => {
@@ -43,9 +56,10 @@ const HomePage = () => {
 
   const cartItemsCount = useMemo(() => Object.values(selectedQuantities).reduce((acc, q) => acc + q, 0), [selectedQuantities]);
   const cartTotal = useMemo(() => Object.entries(selectedQuantities).reduce((acc, [id, q]) => {
-    const service = MASTER_SERVICES.find(s => s.id === id);
+    const service = services.find(s => (s._id || s.id) === id);
     return acc + (service?.basePrice || 0) * q;
-  }, 0), [selectedQuantities]);
+  }, 0), [selectedQuantities, services]);
+
   
   // RBAC Direct Logic
   useEffect(() => {
@@ -258,86 +272,102 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {MASTER_SERVICES.map((service, i) => {
-              const qty = selectedQuantities[service.id] || 0;
-              const isSelected = qty > 0;
-
-              return (
-                <motion.div 
-                  key={service.id}
-                  variants={cardVariants}
-                  className={`bg-white rounded-[2rem] p-5 flex flex-col items-center text-center gap-3 border ${isSelected ? (isHeritage ? 'border-[#996515] ring-1 ring-[#996515]/20' : 'border-primary ring-1 ring-primary/20') : (isHeritage ? 'border-[#D4AF37]/20' : 'border-black/5')} shadow-sm group relative overflow-hidden transition-all`}
-                >
-                  {/* Selection Radio Indicator (BRD Requirement) */}
-                  <div 
-                    onClick={() => updateQuantity(service.id, isSelected ? -qty : 1)}
-                    className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all ${isSelected ? (isHeritage ? 'bg-[#996515] border-[#996515]' : 'bg-primary border-primary') : 'border-slate-200'}`}
-                  >
-                    {isSelected && <span className="material-symbols-outlined text-[12px] text-white font-black">check</span>}
-                  </div>
-
-                  <div 
-                    onClick={() => navigate('/user/service-info', { 
-                      state: { 
-                        selectedService: { 
-                          id: service.id, 
-                          title: service.name, 
-                          desc: service.description, 
-                          icon: service.icon, 
-                          color: isHeritage ? 'heritage' : (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'tertiary'), 
-                          price: `₹${service.basePrice}.00` 
-                        } 
-                      } 
-                    })}
-                    className={`w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-on-surface cursor-pointer group-hover:bg-opacity-100 transition-all duration-300 ${isHeritage ? 'group-hover:bg-[#996515]' : 'group-hover:bg-primary'} group-hover:text-white`}
-                  >
-                    <span className={`material-symbols-outlined text-2xl ${isHeritage ? 'text-[#996515] group-hover:text-white' : ''}`}>{service.icon}</span>
-                  </div>
-                  
-                  <div className="w-full">
-                    <h4 className="font-headline font-black text-[13px] leading-tight mb-1 text-on-surface">{service.name}</h4>
-                    <p className="text-[9px] text-on-surface/40 font-bold uppercase tracking-widest leading-none truncate w-full mb-3">{service.category}</p>
-                    
-                    {/* Quantity Controls (Inline) */}
-                    <div className="flex items-center justify-between bg-slate-50 p-1 rounded-xl border border-slate-100">
-                      <button 
-                        onClick={() => updateQuantity(service.id, -1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-white shadow-sm text-on-surface-variant hover:text-primary transition-all active:scale-90"
-                      >
-                        <span className="material-symbols-outlined text-sm font-black">remove</span>
-                      </button>
-                      
-                      <input 
-                        type="tel"
-                        className="w-8 bg-transparent border-none text-center p-0 text-[11px] font-black pointer-events-auto"
-                        value={qty}
-                        onChange={(e) => setManualQuantity(service.id, e.target.value)}
-                      />
-
-                      <button 
-                        onClick={() => updateQuantity(service.id, 1)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-white shadow-sm text-on-surface-variant hover:text-primary transition-all active:scale-90"
-                      >
-                        <span className="material-symbols-outlined text-sm font-black">add</span>
-                      </button>
+            {loading ? (
+                [...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-[2rem] p-5 h-48 border border-black/5 animate-pulse flex flex-col items-center justify-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-slate-100" />
+                        <div className="h-3 bg-slate-100 rounded w-1/2" />
+                        <div className="h-2 bg-slate-100 rounded w-full px-4" />
                     </div>
-                  </div>
+                ))
+            ) : (
+                <>
+                {services.filter(s => s.tier === selectedTier).map((service, i) => {
+                    const serviceId = service._id || service.id;
+                    const qty = selectedQuantities[serviceId] || 0;
+                    const isSelected = qty > 0;
+
+                    return (
+                        <motion.div 
+                        key={serviceId}
+                        variants={cardVariants}
+                        className={`bg-white rounded-[2rem] p-5 flex flex-col items-center text-center gap-3 border ${isSelected ? (isHeritage ? 'border-[#996515] ring-1 ring-[#996515]/20' : 'border-primary ring-1 ring-primary/20') : (isHeritage ? 'border-[#D4AF37]/20' : 'border-black/5')} shadow-sm group relative overflow-hidden transition-all`}
+                        >
+                        <div 
+                            onClick={() => updateQuantity(serviceId, isSelected ? -qty : 1)}
+                            className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center cursor-pointer transition-all ${isSelected ? (isHeritage ? 'bg-[#996515] border-[#996515]' : 'bg-primary border-primary') : 'border-slate-200'}`}
+                        >
+                            {isSelected && <span className="material-symbols-outlined text-[12px] text-white font-black">check</span>}
+                        </div>
+
+                        <div 
+                            onClick={() => navigate('/user/service-info', { 
+                            state: { 
+                                selectedService: { 
+                                id: serviceId, 
+                                title: service.name, 
+                                desc: service.description, 
+                                image: service.image, 
+                                color: isHeritage ? 'heritage' : (i % 3 === 0 ? 'primary' : i % 3 === 1 ? 'secondary' : 'tertiary'), 
+                                price: `₹${service.basePrice}.00` 
+                                } 
+                            } 
+                            })}
+                            className={`w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-on-surface cursor-pointer group-hover:bg-opacity-100 transition-all duration-300 ${isHeritage ? 'group-hover:bg-[#996515]' : 'group-hover:bg-primary'} group-hover:text-white overflow-hidden`}
+                        >
+                            {service.image ? (
+                                <img src={service.image} alt={service.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className={`material-symbols-outlined text-2xl ${isHeritage ? 'text-[#996515] group-hover:text-white' : ''}`}>local_laundry_service</span>
+                            )}
+                        </div>
+                        
+                        <div className="w-full">
+                            <h4 className="font-headline font-black text-[13px] leading-tight mb-1 text-on-surface">{service.name}</h4>
+                            <p className="text-[9px] text-on-surface/40 font-bold uppercase tracking-widest leading-none truncate w-full mb-3">{service.category}</p>
+                            
+                            <div className="flex items-center justify-between bg-slate-50 p-1 rounded-xl border border-slate-100">
+                            <button 
+                                onClick={() => updateQuantity(serviceId, -1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white shadow-sm text-on-surface-variant hover:text-primary transition-all active:scale-90"
+                            >
+                                <span className="material-symbols-outlined text-sm font-black">remove</span>
+                            </button>
+                            
+                            <input 
+                                type="tel"
+                                className="w-8 bg-transparent border-none text-center p-0 text-[11px] font-black pointer-events-auto"
+                                value={qty}
+                                onChange={(e) => setManualQuantity(serviceId, e.target.value)}
+                            />
+
+                            <button 
+                                onClick={() => updateQuantity(serviceId, 1)}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white shadow-sm text-on-surface-variant hover:text-primary transition-all active:scale-90"
+                            >
+                                <span className="material-symbols-outlined text-sm font-black">add</span>
+                            </button>
+                            </div>
+                        </div>
+                        </motion.div>
+                    );
+                })}
+                
+                <motion.div 
+                variants={cardVariants}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => navigate('/user/services')}
+                className={`${themeBgSubtle} rounded-[2rem] p-5 flex flex-col items-center justify-center gap-2 border border-dashed ${themeBorder} shadow-sm group cursor-pointer active:scale-95 transition-all`}
+                >
+                <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center ${themeText} shadow-sm border ${themeBorder}`}>
+                    <span className="material-symbols-outlined text-xl">apps</span>
+                </div>
+                <p className={`text-[9px] font-black ${themeText} uppercase tracking-widest`}>More Care</p>
                 </motion.div>
-              );
-            })}
-            
-            <motion.div 
-              variants={cardVariants}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => navigate('/user/services')}
-              className={`${themeBgSubtle} rounded-[2rem] p-5 flex flex-col items-center justify-center gap-2 border border-dashed ${themeBorder} shadow-sm group cursor-pointer active:scale-95 transition-all`}
-            >
-              <div className={`w-10 h-10 rounded-full bg-white flex items-center justify-center ${themeText} shadow-sm border ${themeBorder}`}>
-                <span className="material-symbols-outlined text-xl">apps</span>
-              </div>
-              <p className={`text-[9px] font-black ${themeText} uppercase tracking-widest`}>More Care</p>
-            </motion.div>
+                </>
+            )}
           </div>
+
         </motion.section>
 
         {/* Express Booking */}
