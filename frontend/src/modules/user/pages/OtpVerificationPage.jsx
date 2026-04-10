@@ -99,7 +99,7 @@ const OtpVerificationPage = () => {
         </div>
 
         {/* OTP Inputs */}
-        <div className="flex justify-center gap-3 md:gap-4 mb-10">
+        <div className="flex justify-center gap-2 md:gap-3 mb-10">
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -110,7 +110,7 @@ const OtpVerificationPage = () => {
               value={digit}
               onChange={(e) => handleChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-14 h-16 md:w-16 md:h-20 bg-surface-container-low border-2 border-slate-300 rounded-2xl text-center text-3xl font-black text-on-surface focus:bg-white focus:border-primary/20 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-inner"
+              className="w-11 h-14 md:w-14 md:h-16 bg-surface-container-low border-2 border-slate-200 rounded-xl text-center text-2xl font-black text-on-surface focus:bg-white focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all outline-none shadow-sm"
             />
           ))}
         </div>

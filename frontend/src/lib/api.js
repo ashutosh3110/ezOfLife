@@ -2,6 +2,10 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const authApi = {
     requestOtp: async (phone, channel, mode, role) => {
+        // Mock Credentials Bypass
+        if (phone === '9999999999') {
+            return { message: 'OTP sent successfully', mock: true };
+        }
         try {
             const response = await fetch(`${BASE_URL}/auth/request-otp`, {
                 method: 'POST',
@@ -15,6 +19,18 @@ export const authApi = {
         }
     },
     verifyOtp: async (phone, otp) => {
+        // Mock Credentials Bypass
+        if (phone === '9999999999' && otp === '123456') {
+            return {
+                user: {
+                    _id: '66112c3f8e4b8a2e5c8b4568', // Consistent mock ID
+                    phone: '9999999999',
+                    displayName: 'Mock User',
+                    role: 'User' // Default, will be overridden by local logic if needed
+                },
+                token: 'mock-jwt-token'
+            };
+        }
         try {
             const response = await fetch(`${BASE_URL}/auth/verify-otp`, {
                 method: 'POST',
@@ -64,6 +80,25 @@ export const authApi = {
         }
     },
     getProfile: async (id) => {
+        if (id === '66112c3f8e4b8a2e5c8b4568') {
+            return {
+                _id: '66112c3f8e4b8a2e5c8b4568',
+                phone: '9999999999',
+                displayName: 'Mock Professional',
+                email: 'mock@ezlife.com',
+                createdAt: new Date().toISOString(),
+                location: { lat: 28.4595, lng: 77.0266 },
+                riderDetails: {
+                    address: '123 Mock Street, Gurgaon',
+                    vehicleModel: 'Mock Racer',
+                    plateNumber: 'MK-007'
+                },
+                supplierDetails: {
+                    shopName: 'Mock Wash Hub',
+                    address: 'Sector 44, Gurgaon'
+                }
+            };
+        }
         try {
             const response = await fetch(`${BASE_URL}/auth/profile/${id}`);
             return await response.json();
@@ -178,6 +213,13 @@ export const orderApi = {
         }
     },
     getVendorOrders: async (vendorId) => {
+        if (vendorId === '66112c3f8e4b8a2e5c8b4568') {
+            return [
+                { _id: '1', orderId: 'SZ-MOCK-1', status: 'Assigned', items: [{ name: 'Express Wash' }], customer: { displayName: 'John Doe' } },
+                { _id: '2', orderId: 'SZ-MOCK-2', status: 'In Progress', items: [{ name: 'Dry Clean' }], customer: { displayName: 'Jane Smith' } },
+                { _id: '3', orderId: 'SZ-MOCK-3', status: 'Ready', items: [{ name: 'Ironing' }], customer: { displayName: 'Bob Wilson' } }
+            ];
+        }
         try {
             const response = await fetch(`${BASE_URL}/orders/vendor?vendorId=${vendorId}`);
             return await response.json();
@@ -199,7 +241,21 @@ export const orderApi = {
             throw error;
         }
     },
+    getAllOrders: async () => {
+        // Mock Admin Data
+        return [
+            { _id: '1', orderId: 'AD-MOCK-1', status: 'Assigned', totalAmount: 450, createdAt: new Date().toISOString(), customer: { displayName: 'John Doe' }, vendor: { shopDetails: { name: 'Main Laundry' } } },
+            { _id: '2', orderId: 'AD-MOCK-2', status: 'In Progress', totalAmount: 1200, createdAt: new Date().toISOString(), customer: { displayName: 'Jane Smith' }, vendor: { shopDetails: { name: 'Central Dry Clean' } } },
+            { _id: '3', orderId: 'AD-MOCK-3', status: 'Delivered', totalAmount: 300, createdAt: new Date().toISOString(), customer: { displayName: 'Bob Wilson' }, vendor: { shopDetails: { name: 'Quick Iron' } } }
+        ];
+    },
     getRiderTasks: async (riderId) => {
+        if (riderId === '66112c3f8e4b8a2e5c8b4568') {
+            return [
+                { _id: '101', orderId: 'TSK-MOCK-1', status: 'Accepted', customerName: 'Alice', address: 'Plot 4, Sec 2' },
+                { _id: '102', orderId: 'TSK-MOCK-2', status: 'Picked Up', customerName: 'Charlie', address: 'Villa 9, DLF' }
+            ];
+        }
         try {
             const response = await fetch(`${BASE_URL}/orders/rider/${riderId}`);
             return await response.json();
@@ -222,6 +278,13 @@ export const orderApi = {
         }
     },
     getRiderStats: async (riderId) => {
+        if (riderId === '66112c3f8e4b8a2e5c8b4568') {
+            return {
+                weeklyEarnings: 5420,
+                tasksToday: 8,
+                lifetimeRating: 4.92
+            };
+        }
         try {
             const response = await fetch(`${BASE_URL}/orders/rider-stats/${riderId}`);
             return await response.json();

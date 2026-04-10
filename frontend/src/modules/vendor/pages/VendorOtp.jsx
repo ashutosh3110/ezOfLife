@@ -93,15 +93,15 @@ const VendorOtp = () => {
                     </div>
 
                     {/* OTP Boxes */}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2.5">
                         {otp.map((digit, i) => (
                             <motion.div
                                 key={i}
                                 animate={{
-                                    scale: digit ? 1.06 : 1,
+                                    scale: digit ? 1.05 : 1,
                                 }}
                                 transition={{ type: "spring", stiffness: 300 }}
-                                className={`w-12 h-14 rounded-2xl flex items-center justify-center text-xl font-black font-headline border-4 transition-all duration-300 ${
+                                className={`w-10 h-14 rounded-2xl flex items-center justify-center text-xl font-black font-headline border-4 transition-all duration-300 ${
                                     digit
                                         ? 'bg-primary/5 text-primary border-primary shadow-md shadow-primary/10'
                                         : 'bg-surface-container-high/40 text-on-surface-variant border-slate-300'
