@@ -110,11 +110,12 @@ const Earnings = () => {
     };
 
     const performanceData = useMemo(() => {
-        const base = stats.totalGross > 0 ? stats.totalGross / 100 : 50;
+        const hasData = stats.totalGross > 0;
+        const base = hasData ? stats.totalGross / 100 : 0;
         return {
-            'Daily': { labels: ['18', '19', '20', '21', '22', '23', '24'], values: [65, 40, 85, 30, 95, 60, 45].map(v => Math.min(100, (v * base) / 100 + 10)), activeIdx: 6 },
-            'Weekly': { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], values: [45, 65, 55, 90, 45, 75, 30].map(v => Math.min(100, (v * base) / 100 + 10)), activeIdx: 3 },
-            'Monthly': { labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'], values: [60, 80, 55, 95, 70, 85].map(v => Math.min(100, (v * base) / 100 + 10)), activeIdx: 5 }
+            'Daily': { labels: ['18', '19', '20', '21', '22', '23', '24'], values: hasData ? [65, 40, 85, 30, 95, 60, 45].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0,0], activeIdx: hasData ? 6 : -1 },
+            'Weekly': { labels: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], values: hasData ? [45, 65, 55, 90, 45, 75, 30].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0,0], activeIdx: hasData ? 3 : -1 },
+            'Monthly': { labels: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'], values: hasData ? [60, 80, 55, 95, 70, 85].map(v => Math.min(100, (v * base) / 100 + 10)) : [0,0,0,0,0,0], activeIdx: hasData ? 5 : -1 }
         };
     }, [stats.totalGross]);
 

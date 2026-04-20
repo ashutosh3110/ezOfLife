@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../../lib/api';
 import { motion } from 'framer-motion';
 
 const RegisterAsVendorPage = () => {
@@ -89,7 +90,28 @@ const RegisterAsVendorPage = () => {
           <p className="text-white/70 text-xs font-bold mb-8 italic">Onboarding takes less than 5 minutes.</p>
           
           <button 
-            onClick={() => navigate('/vendor/auth')}
+            onClick={async () => {
+              try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const userId = user._id || user.id || localStorage.getItem('userId');
+                
+                if (!userId) {
+                  navigate('/user/auth');
+                  return;
+                }
+
+                const res = await authApi.becomeVendor(userId);
+                if (res.role) {
+                  // Update local storage
+                  const updatedUser = { ...user, role: res.role, status: 'pending' };
+                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                  localStorage.setItem('userRole', res.role);
+                  navigate('/vendor/register', { state: { phone: updatedUser.phone } });
+                }
+              } catch (err) {
+                console.error('Transition Error:', err);
+              }
+            }}
             className="w-full bg-white text-primary py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
           >
             Apply as Vendor

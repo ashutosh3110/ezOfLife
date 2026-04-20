@@ -11,7 +11,8 @@ export default function DataGrid({
     actions,
     footer,
     density = 'compact', // compact, standard
-    stickyHeader = true
+    stickyHeader = true,
+    loading = false
 }) {
     return (
         <div className="w-full bg-white border border-slate-200 flex flex-col rounded-sm">
@@ -75,11 +76,20 @@ export default function DataGrid({
                                     </div>
                                 </th>
                             ))}
-                            <th className="px-5 py-3 w-10"></th>
+                            {onAction && <th className="px-5 py-3 w-10 border-b border-slate-200 bg-slate-50/50"></th>}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {data.length > 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan={columns.length + (onAction ? 1 : 0)} className="px-4 py-16 text-center">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="w-8 h-8 border-2 border-slate-200 border-t-slate-900 rounded-full animate-spin" />
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 animate-pulse">Synchronizing entities...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : data.length > 0 ? (
                             data.map((row, rowIdx) => (
                                 <tr
                                     key={rowIdx}
@@ -102,16 +112,18 @@ export default function DataGrid({
                                             {col.render ? col.render(row[col.key], row) : row[col.key]}
                                         </td>
                                     ))}
-                                    <td className="px-5 py-3 text-right">
-                                        <button className="p-1.5 rounded-sm text-slate-300 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 transition-all" onClick={(e) => { e.stopPropagation(); onAction?.(row); }}>
-                                            <MoreHorizontal size={14} />
-                                        </button>
-                                    </td>
+                                    {onAction && (
+                                        <td className="px-5 py-3 text-right">
+                                            <button className="p-1.5 rounded-sm text-slate-300 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 transition-all" onClick={(e) => { e.stopPropagation(); onAction?.(row); }}>
+                                                <MoreHorizontal size={14} />
+                                            </button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={columns.length + 1} className="px-4 py-16 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest opacity-60">
+                                <td colSpan={columns.length + (onAction ? 1 : 0)} className="px-4 py-16 text-center text-slate-400 text-[10px] font-bold uppercase tracking-widest opacity-60">
                                     Entity registry empty / No records found
                                 </td>
                             </tr>

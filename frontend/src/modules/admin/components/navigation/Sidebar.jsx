@@ -30,7 +30,9 @@ import {
     MessageSquare,
     Handshake,
     Bell,
-    Briefcase
+    Briefcase,
+    ClipboardList,
+    Factory
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -57,6 +59,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
             group: 'Network', items: [
                 { icon: Store, label: 'Vendors', path: '/admin/vendors' },
                 { icon: ShieldCheck, label: 'Approvals', path: '/admin/vendors/approvals' },
+                { icon: Factory, label: 'Suppliers', path: '/admin/suppliers' },
                 { icon: Users, label: 'Users', path: '/admin/users' },
             ]
         },
@@ -69,6 +72,7 @@ export default function Sidebar({ isCollapsed, setIsCollapsed }) {
         },
         {
             group: 'Core Assets', items: [
+                { icon: ClipboardList, label: 'Master Services', path: '/admin/master-services' },
                 { icon: Package, label: 'Services', path: '/admin/services' },
                 { icon: Layers, label: 'Material Catalog', path: '/admin/materials' },
                 { icon: UserCircle, label: 'Labor Manager', path: '/admin/labor' },

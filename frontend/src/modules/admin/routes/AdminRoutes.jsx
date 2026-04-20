@@ -28,6 +28,9 @@ import PartnershipInquiries from '../pages/PartnershipInquiries';
 import LaborManagement from '../pages/LaborManagement';
 import NotificationsPage from '../pages/NotificationsPage';
 import CareerModeration from '../pages/CareerModeration';
+import Suppliers from '../pages/Suppliers';
+
+import MasterServiceManagement from '../pages/MasterServiceManagement';
 
 // Simple Guard Component
 const AdminGuard = ({ children }) => {
@@ -67,6 +70,7 @@ const AdminRoutes = () => {
         <Route path="/vendors/approvals" element={<OnboardingApprovals />} />
         <Route path="/payouts" element={<Payouts />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/master-services" element={<MasterServiceManagement />} />
         <Route path="/riders" element={<Riders />} />
         <Route path="/pricing" element={<PricingConfig />} />
         <Route path="/help-desk" element={<HelpDesk />} />
@@ -74,6 +78,7 @@ const AdminRoutes = () => {
         <Route path="/users" element={<Users />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/b2b-leads" element={<B2BLeads />} />
+        <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/materials" element={<MaterialConfig />} />
         <Route path="/faqs" element={<FAQManagement />} />
         <Route path="/feedback" element={<FeedbackManagement />} />

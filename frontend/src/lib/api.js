@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+export const UPLOADS_URL = BASE_URL.replace('/api', '');
 
 export const authApi = {
     requestOtp: async (phone, channel, mode, role) => {
@@ -19,18 +20,6 @@ export const authApi = {
         }
     },
     verifyOtp: async (phone, otp) => {
-        // Mock Credentials Bypass
-        if (phone === '9999999999' && otp === '123456') {
-            return {
-                user: {
-                    _id: '66112c3f8e4b8a2e5c8b4568', // Consistent mock ID
-                    phone: '9999999999',
-                    displayName: 'Mock User',
-                    role: 'User' // Default, will be overridden by local logic if needed
-                },
-                token: 'mock-jwt-token'
-            };
-        }
         try {
             const response = await fetch(`${BASE_URL}/auth/verify-otp`, {
                 method: 'POST',
@@ -106,25 +95,6 @@ export const authApi = {
         }
     },
     getProfile: async (id) => {
-        if (id === '66112c3f8e4b8a2e5c8b4568') {
-            return {
-                _id: '66112c3f8e4b8a2e5c8b4568',
-                phone: '9999999999',
-                displayName: 'Mock Professional',
-                email: 'mock@ezlife.com',
-                createdAt: new Date().toISOString(),
-                location: { lat: 28.4595, lng: 77.0266 },
-                riderDetails: {
-                    address: '123 Mock Street, Gurgaon',
-                    vehicleModel: 'Mock Racer',
-                    plateNumber: 'MK-007'
-                },
-                supplierDetails: {
-                    shopName: 'Mock Wash Hub',
-                    address: 'Sector 44, Gurgaon'
-                }
-            };
-        }
         try {
             const response = await fetch(`${BASE_URL}/auth/profile/${id}`);
             return await response.json();
@@ -147,6 +117,79 @@ export const authApi = {
             return await response.json();
         } catch (error) {
             console.error('Update Profile Error:', error);
+            throw error;
+        }
+    },
+    becomeVendor: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/auth/become-vendor/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Become Vendor API Error:', error);
+            throw error;
+        }
+    },
+    becomeSupplier: async (id, formData) => {
+        try {
+            const isFormData = formData instanceof FormData;
+            const response = await fetch(`${BASE_URL}/auth/become-supplier/${id}`, {
+                method: 'POST',
+                headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+                body: isFormData ? formData : JSON.stringify(formData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Become Supplier API Error:', error);
+            throw error;
+        }
+    }
+};
+
+export const b2bOrderApi = {
+    placeOrder: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/place`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Place B2B Order Error:', error);
+            throw error;
+        }
+    },
+    getSupplierOrders: async (supplierId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/supplier/${supplierId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Supplier Orders Error:', error);
+            throw error;
+        }
+    },
+    getVendorOrders: async (vendorId) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/vendor/${vendorId}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Fetch Vendor B2B Orders Error:', error);
+            throw error;
+        }
+    },
+    updateStatus: async (id, status) => {
+        try {
+            const response = await fetch(`${BASE_URL}/b2b-orders/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update B2B Status Error:', error);
             throw error;
         }
     }
@@ -210,6 +253,119 @@ export const adminApi = {
             return await response.json();
         } catch (error) {
             console.error('All Vendors Error:', error);
+            throw error;
+        }
+    },
+    deleteVendor: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/vendors/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Vendor Error:', error);
+            throw error;
+        }
+    },
+    registerCustomer: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/register-customer`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Register Customer Error:', error);
+            throw error;
+        }
+    },
+    getVendorById: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/vendors/${id}`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Vendor By ID Error:', error);
+            throw error;
+        }
+    },
+    updateServiceStatus: async (vendorId, serviceId, data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/vendors/${vendorId}/services/${serviceId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Service Status Error:', error);
+            throw error;
+        }
+    },
+    uploadVendorDocument: async (vendorId, formData) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/vendors/${vendorId}/documents`, {
+                method: 'POST',
+                body: formData
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Upload Vendor Doc Error:', error);
+            throw error;
+        }
+    },
+    getAllSuppliers: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/suppliers`);
+            return await response.json();
+        } catch (error) {
+            console.error('All Suppliers Error:', error);
+            throw error;
+        }
+    },
+    approveSupplier: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/suppliers/${id}/approve`, {
+                method: 'PATCH'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Approve Supplier Error:', error);
+            throw error;
+        }
+    },
+    rejectSupplier: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/suppliers/${id}/reject`, {
+                method: 'PATCH'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Reject Supplier Error:', error);
+            throw error;
+        }
+    },
+    updateSupplier: async (id, data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/suppliers/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Supplier Error:', error);
+            throw error;
+        }
+    },
+    deleteSupplier: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/admin/suppliers/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Supplier Error:', error);
             throw error;
         }
     }
@@ -1004,3 +1160,60 @@ export const jobApi = {
     }
 };
 
+export const masterServiceApi = {
+    getAll: async () => {
+        try {
+            const response = await fetch(`${BASE_URL}/master-services`);
+            return await response.json();
+        } catch (error) {
+            console.error('Master Service API Error:', error);
+            throw error;
+        }
+    },
+    create: async (data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/master-services`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Create Master Service Error:', error);
+            throw error;
+        }
+    },
+    update: async (id, data) => {
+        try {
+            const response = await fetch(`${BASE_URL}/master-services/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Update Master Service Error:', error);
+            throw error;
+        }
+    },
+    delete: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/master-services/${id}`, {
+                method: 'DELETE'
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Delete Master Service Error:', error);
+            throw error;
+        }
+    },
+    getVendorRates: async (id) => {
+        try {
+            const response = await fetch(`${BASE_URL}/master-services/${id}/vendors`);
+            return await response.json();
+        } catch (error) {
+            console.error('Get Vendor Rates Error:', error);
+            throw error;
+        }
+    }
+};

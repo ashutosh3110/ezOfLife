@@ -1,5 +1,5 @@
 import express from 'express';
-import { requestOtp, verifyOtp, adminLogin, completeVendorProfile, getStatus, getUserProfile, updateUserProfile, registerVendor, vendorLogin } from '../controllers/authController.js';
+import { requestOtp, verifyOtp, adminLogin, completeVendorProfile, getStatus, getUserProfile, updateUserProfile, registerVendor, vendorLogin, becomeVendor, becomeSupplier } from '../controllers/authController.js';
 import upload from '../middleware/upload.js';
 
 const router = express.Router();
@@ -17,5 +17,20 @@ router.post('/complete-vendor-profile', upload.fields([
 router.get('/get-status', getStatus);
 router.get('/profile/:id', getUserProfile);
 router.patch('/profile/update/:id', updateUserProfile);
+router.patch('/become-vendor/:id', becomeVendor);
+router.post('/become-supplier/:id', (req, res, next) => {
+    upload.fields([
+        { name: 'gstCert', maxCount: 1 },
+        { name: 'udyogAadhar', maxCount: 1 },
+        { name: 'aadharCard', maxCount: 1 },
+        { name: 'addressProof', maxCount: 1 }
+    ])(req, res, (err) => {
+        if (err) {
+            console.error('❌ [MULTER_ERROR]', err);
+            return res.status(400).json({ message: 'Document upload failed', error: err.message });
+        }
+        next();
+    });
+}, becomeSupplier);
 
 export default router;

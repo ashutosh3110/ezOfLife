@@ -452,14 +452,63 @@ const CartPage = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
-                <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">location_on</span>Locale</h3>
-                <div onClick={() => setShowAddressPicker(true)} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-200 cursor-pointer hover:bg-white transition-all">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined">home</span></div>
-                        <div className="flex-1 overflow-hidden"><p className="text-sm font-bold text-slate-900 truncate">{selectedPickupAddress?.address || 'Select Address'}</p></div>
-                        <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+            <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-8">
+                <div className="flex items-center justify-between">
+                    <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">location_on</span>Locale</h3>
+                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Diff. Drop?</span>
+                        <div 
+                          onClick={() => setIsSameAddress(!isSameAddress)}
+                          className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${!isSameAddress ? 'bg-primary' : 'bg-slate-200'}`}
+                        >
+                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${!isSameAddress ? 'left-7' : 'left-1'}`} />
+                        </div>
                     </div>
+                </div>
+
+                <div className="space-y-4">
+                    {/* Pickup Section */}
+                    <div className="space-y-3">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">1. Collection Point</p>
+                        <div onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }} className="bg-primary/5 p-6 rounded-[2rem] border-2 border-primary/20 cursor-pointer hover:bg-white transition-all shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined">directions_run</span></div>
+                                <div className="flex-1 overflow-hidden">
+                                    <p className="text-[11px] font-black text-primary uppercase tracking-widest mb-0.5">Pickup From</p>
+                                    <p className="text-sm font-bold text-slate-900 truncate">{selectedPickupAddress?.address || 'Select Pickup Location'}</p>
+                                </div>
+                                <span className="material-symbols-outlined text-primary/40">chevron_right</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Drop Section (Conditional) */}
+                    {!isSameAddress && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-3"
+                        >
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">2. Final Destination</p>
+                            <div onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 cursor-pointer hover:bg-white transition-all">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><span className="material-symbols-outlined">local_shipping</span></div>
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Drop To</p>
+                                        <p className="text-sm font-bold text-slate-900 truncate">{selectedDropAddress?.address || 'Select Drop Location'}</p>
+                                    </div>
+                                    <span className="material-symbols-outlined text-slate-300">chevron_right</span>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {isSameAddress && (
+                        <div className="flex items-center gap-2 px-6 py-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                             <span className="material-symbols-outlined text-emerald-500 text-sm">verified</span>
+                             <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Laundry will be dropped at pickup location</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -514,7 +563,25 @@ const CartPage = () => {
                             <span className="text-xs font-black uppercase tracking-widest">Pin on Map</span>
                         </button>
                         {addresses.map(addr => (
-                            <div key={addr.id} onClick={() => { setSelectedPickupAddress(addr); setShowAddressPicker(false); }} className="p-6 rounded-[2rem] bg-slate-50 flex items-center gap-5 cursor-pointer"><span className="material-symbols-outlined text-primary text-2xl">home</span><div><p className="text-xs font-black text-slate-900 leading-none mb-1">{addr.type}</p><p className="text-[10px] font-bold text-slate-400 truncate max-w-[200px]">{addr.address}</p></div></div>
+                            <div 
+                              key={addr.id} 
+                              onClick={() => { 
+                                if (activeAddressType === 'pickup') {
+                                    setSelectedPickupAddress(addr);
+                                    if (isSameAddress) setSelectedDropAddress(addr);
+                                } else {
+                                    setSelectedDropAddress(addr);
+                                }
+                                setShowAddressPicker(false); 
+                              }} 
+                              className="p-6 rounded-[2rem] bg-slate-50 flex items-center gap-5 cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-primary text-2xl">home</span>
+                                <div>
+                                    <p className="text-xs font-black text-slate-900 leading-none mb-1">{addr.type}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 truncate max-w-[200px]">{addr.address}</p>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </motion.div>

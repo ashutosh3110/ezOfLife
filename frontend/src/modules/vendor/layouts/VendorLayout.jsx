@@ -12,7 +12,27 @@ const VendorLayout = () => {
   const navigate = useNavigate();
   const { incomingRequest, setIncomingRequest, clearIncomingRequest } = useVendorOrderStore();
   const [acceptingId, setAcceptingId] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(45);
   const { addNotification } = useNotificationStore();
+
+  // Timer logic for incoming request
+  useEffect(() => {
+    let timer;
+    if (incomingRequest) {
+      setTimeLeft(45); // Reset timer to 45s for each new request
+      timer = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            clearIncomingRequest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [incomingRequest, clearIncomingRequest]);
 
   const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
   const vendorId = vendorData?._id || vendorData?.id;
@@ -95,8 +115,7 @@ const VendorLayout = () => {
     '/vendor/upload-documents', 
     '/vendor/approval-pending',
     '/vendor/walk-in',
-    '/vendor/promotions',
-    '/vendor/fulfillment'
+    '/vendor/promotions'
   ];
   
   const isOrderDetails = location.pathname.includes('/vendor/order/');
@@ -105,7 +124,7 @@ const VendorLayout = () => {
   const showNav = !noNavPaths.some(path => location.pathname === path) && !isOrderDetails && !isRiderVerification;
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       <main className="flex-1 w-full relative">
         <Outlet />
       </main>
@@ -125,61 +144,117 @@ const VendorLayout = () => {
               initial={{ scale: 0.85, opacity: 0, y: 100 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.85, opacity: 0, y: 100 }}
-              className="bg-white w-full max-w-md rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.5)] border border-slate-100 relative z-[5001] overflow-hidden"
+              className="bg-white w-full max-w-md rounded-[3rem] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.5)] border border-slate-100 relative z-[5001] overflow-y-auto max-h-[92vh] hide-scrollbar"
             >
               {/* Theme Bar */}
-              <div className="h-2 bg-[#73e0c9]"></div>
+              <div className="h-2 bg-[#73e0c9] sticky top-0 z-20"></div>
               
-              <div className="p-8 space-y-8">
-                {/* Header */}
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-[#73e0c9]/10 flex items-center justify-center text-[#73e0c9]">
-                    <span className="material-symbols-outlined text-4xl animate-pulse">notifications_active</span>
+              <div className="p-7 space-y-6">
+                {/* Header: Timer & ID */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 rounded-xl border border-rose-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest whitespace-nowrap">
+                        Expires in 00:{timeLeft.toString().padStart(2, '0')}
+                    </p>
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">New Request</h3>
-                    <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mt-1 text-[#73e0c9]">Immediate Acceptance</p>
+                  <span className="bg-slate-900 text-white px-4 py-1.5 rounded-xl text-[10px] font-black tracking-[0.15em] uppercase shadow-sm">
+                    {incomingRequest.orderId}
+                  </span>
+                </div>
+
+                {/* Primary Title & Order Type */}
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <div className="w-20 h-20 rounded-[2rem] bg-[#73e0c9]/10 flex items-center justify-center text-[#73e0c9] shadow-inner">
+                    <span className="material-symbols-outlined text-4xl animate-bounce">notifications_active</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-3">
+                        <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">New Request</h3>
+                        <span className={`px-2.5 py-1 ${incomingRequest.isExpress ? 'bg-[#73e0c9] text-white shadow-lg shadow-[#73e0c9]/20' : 'bg-slate-100 text-slate-400'} rounded-lg text-[8px] font-black uppercase tracking-widest`}>
+                            {incomingRequest.isExpress ? '⚡ Express' : 'Standard'}
+                        </span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-[14px] text-[#73e0c9]">distance</span>
+                      {incomingRequest.distance || '1.8'} KM Away • {incomingRequest.address?.split(',')[0]}
+                    </p>
                   </div>
                 </div>
 
-                {/* Details Card */}
-                <div className="bg-slate-50 rounded-[2.5rem] p-6 border border-slate-100 space-y-6">
-                  {/* Order ID & Status */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Reference</span>
-                    <span className="bg-slate-900 text-white px-4 py-1.5 rounded-xl text-[11px] font-bold tracking-tight">
-                      {incomingRequest.orderId}
-                    </span>
+                {/* Logistics Info Card */}
+                <div className="bg-slate-50 rounded-[3rem] p-6 border border-slate-100 space-y-5">
+                  {/* Pickup Slot Row */}
+                  <div className="flex items-center gap-4 bg-white p-4 rounded-3xl shadow-sm border border-slate-100">
+                    <div className="w-12 h-12 rounded-2xl bg-[#73e0c9]/10 flex items-center justify-center text-[#73e0c9]">
+                      <span className="material-symbols-outlined text-2xl">schedule</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pickup Slot</p>
+                      <h4 className="text-[13px] font-black text-slate-900 leading-none mt-1">
+                        {typeof incomingRequest.pickupSlot === 'object' && incomingRequest.pickupSlot?.time 
+                            ? `${incomingRequest.pickupSlot.date} | ${incomingRequest.pickupSlot.time}` 
+                            : incomingRequest.pickupSlot || '3:00 PM - 4:00 PM'}
+                      </h4>
+                    </div>
                   </div>
 
-                  {/* Primary Details */}
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-900 shadow-sm">
-                      <span className="material-symbols-outlined text-3xl">local_laundry_service</span>
+                  {/* Service & Load Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-center gap-3 bg-white/50 p-4 rounded-3xl border border-slate-100">
+                      <span className="material-symbols-outlined text-xl text-[#73e0c9]">local_laundry_service</span>
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Service</p>
+                        <p className="text-[11px] font-black text-slate-900 truncate mt-1 leading-none">
+                            {incomingRequest.items[0]?.name || 'Full Wash'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Service Type</p>
-                      <h4 className="text-lg font-black text-slate-900 leading-none capitalize">
-                        {incomingRequest.items[0]?.name || 'Loading...'}
-                      </h4>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="material-symbols-outlined text-[14px] text-[#73e0c9]">check_circle</span>
-                        <p className="text-xs font-bold text-slate-600">
-                          {incomingRequest.items.reduce((acc, i) => acc + i.quantity, 0)} कपड़े (Capacity)
+                    <div className="flex items-center gap-3 bg-white/50 p-4 rounded-3xl border border-slate-100">
+                      <span className="material-symbols-outlined text-xl text-[#73e0c9]">layers</span>
+                      <div className="min-w-0">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Load</p>
+                        <p className="text-[11px] font-black text-slate-900 truncate mt-1 leading-none">
+                            {incomingRequest.items.reduce((acc, i) => acc + i.quantity, 0)} Items
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Special Instructions (Custom Note) */}
-                  <div className="pt-4 border-t border-slate-200">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="material-symbols-outlined text-sm text-amber-500">sticky_note_2</span>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Special Instruction</p>
+                  {/* Special Instructions & Indicators */}
+                  <div className="pt-2 space-y-4">
+                    <div className="bg-[#73e0c9]/5 p-4 rounded-2xl border border-[#73e0c9]/10">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-sm text-amber-500">sticky_note_2</span>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Special Instruction</p>
+                      </div>
+                      <p className="text-xs font-bold text-slate-600 leading-relaxed italic">
+                        {incomingRequest.specialInstructions || '"Handle with care, premium fabrics"'}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-slate-700 leading-relaxed">
-                      {incomingRequest.specialInstructions || '"No special notes from customer"'}
-                    </p>
+
+                    <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest px-1">
+                        <div className="flex items-center gap-2 text-slate-400">
+                            <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                            Payment After Delivery
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[#73e0c9]">
+                            <span className="material-symbols-outlined text-[14px]">photo_library</span>
+                            2 Photos Attached
+                        </div>
+                    </div>
+                  </div>
+
+                  {/* Earnings Highlight */}
+                  <div className="bg-slate-900 p-6 rounded-[2rem] flex items-center justify-between shadow-xl">
+                    <div>
+                        <p className="text-[9px] font-black text-[#73e0c9] uppercase tracking-widest leading-none">Estimated Earnings</p>
+                        <p className="text-2xl font-black text-white tracking-tighter mt-1 leading-none">₹{(incomingRequest.totalAmount * 0.9).toFixed(0)}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest leading-none">Total Value</p>
+                        <p className="text-sm font-black text-white/50 line-through mt-1 leading-none">₹{incomingRequest.totalAmount?.toFixed(0)}</p>
+                    </div>
                   </div>
                 </div>
 

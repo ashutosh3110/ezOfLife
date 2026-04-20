@@ -22,8 +22,9 @@ const MoreMenuPage = () => {
     visible: { opacity: 1, x: 0 }
   }), []);
 
-  const userRole = useMemo(() => localStorage.getItem('userRole') || 'customer', []);
+  const userRole = useMemo(() => (localStorage.getItem('userRole') || 'customer').toLowerCase(), []);
   const isVendor = useMemo(() => userRole === 'vendor', [userRole]);
+  const isSupplier = useMemo(() => userRole === 'supplier', [userRole]);
 
   const menuSections = useMemo(() => [
     {
@@ -45,6 +46,9 @@ const MoreMenuPage = () => {
         isVendor ? 
           { icon: "dashboard_customize", title: "Vendor Dashboard", desc: "Manage your Shop Operations", path: "/vendor/dashboard", color: "secondary" } :
           { icon: "storefront", title: "Become a Vendor", desc: "Onboard Physical Shop", path: "/user/become-vendor" },
+        isSupplier ?
+          { icon: "factory", title: "Supplier Dashboard", desc: "Manage Supply Logistics", path: "/supplier/dashboard", color: "tertiary" } :
+          { icon: "inventory", title: "Become a Supplier", desc: "Distribute Materials", path: "/user/become-supplier" },
         { icon: "inventory_2", title: "Industrial Catalog", desc: "Browse ecosystem supplies", path: "/user/materials", color: "primary" },
         { icon: "work", title: "Careers", desc: "Join the team", path: "/user/careers", color: "tertiary" }
       ]

@@ -1,21 +1,46 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { b2bOrderApi } from '../../../lib/api';
+import toast from 'react-hot-toast';
 
 const SupplierDashboard = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('Consolidation');
+    const [activeTab, setActiveTab] = useState('Incoming Orders');
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const consolidationData = useMemo(() => [
-        { id: 'B2B-001', item: 'Eco-Friendly Detergent', total: '450 kg', deadline: 'Fri, 18:00', status: 'In Review' },
-        { id: 'B2B-002', item: 'Biodegradable Laundry Bags', total: '1,200 units', deadline: 'Sat, 12:00', status: 'Ready to Dispatch' },
-        { id: 'B2B-003', item: 'Starch Concentrate', total: '150 L', deadline: 'Sun, 09:00', status: 'Pending Rates' },
-    ], []);
+    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    const supplierId = user._id || user.id;
 
-    const historicalData = useMemo(() => [
-        { id: 'SHP-998', date: 'Mar 25, 2026', total: '₹42,850', items: 12, status: 'Settled' },
-        { id: 'SHP-992', date: 'Mar 18, 2026', total: '₹38,200', items: 8, status: 'Processing' },
-    ], []);
+    const fetchOrders = async () => {
+        try {
+            setLoading(true);
+            const data = await b2bOrderApi.getSupplierOrders(supplierId);
+            setOrders(data);
+        } catch (error) {
+            console.error('Fetch Orders Error:', error);
+            toast.error('Failed to load orders');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (supplierId) {
+            fetchOrders();
+        }
+    }, [supplierId]);
+
+    const handleStatusUpdate = async (orderId, newStatus) => {
+        try {
+            await b2bOrderApi.updateStatus(orderId, newStatus);
+            toast.success(`Order marked as ${newStatus}`);
+            fetchOrders();
+        } catch (error) {
+            toast.error('Failed to update status');
+        }
+    };
 
     const containerVariants = useMemo(() => ({
         hidden: { opacity: 0 },
@@ -27,7 +52,7 @@ const SupplierDashboard = () => {
         visible: { y: 0, opacity: 1 }
     }), []);
 
-    const dashboardTabs = useMemo(() => ['Consolidation', 'History', 'Logistics'], []);
+    const dashboardTabs = useMemo(() => ['Incoming Orders', 'History', 'Logistics'], []);
 
     return (
         <div className="bg-background text-on-surface min-h-screen pb-60 font-body">
@@ -54,17 +79,17 @@ const SupplierDashboard = () => {
             <main className="px-6 space-y-8 flex-1 max-w-xl mx-auto">
                 <section className="grid grid-cols-2 gap-4">
                     <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-sm transition-all hover:shadow-md">
-                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Weekly Volume</p>
-                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">1,800+ <span className="text-[10px] opacity-40">Units</span></h2>
+                        <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Active Orders</p>
+                        <h2 className="text-2xl font-black text-on-surface tracking-tighter">{orders.filter(o => o.status !== 'Delivered').length} <span className="text-[10px] opacity-40">Orders</span></h2>
                         <span className="text-[9px] text-primary font-black uppercase mt-1.5 block flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[12px]">trending_up</span>
-                            14% growth
+                            <span className="material-symbols-outlined text-[12px]">local_shipping</span>
+                            Regional Logisitics Active
                         </span>
                     </div>
                     <div className="bg-primary text-on-primary p-5 rounded-3xl shadow-xl shadow-black/20 transition-all hover:scale-[1.02]">
-                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Cycle Deadline</p>
-                        <h2 className="text-3xl font-black tracking-tighter leading-none">2d 14h</h2>
-                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">Prepare Next Batch</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Local Area</p>
+                        <h2 className="text-3xl font-black tracking-tighter leading-none">{user.supplierDetails?.pincode || '452001'}</h2>
+                        <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">{user.supplierDetails?.city || 'Indore'}</p>
                     </div>
                 </section>
 
@@ -82,7 +107,7 @@ const SupplierDashboard = () => {
                 </div>
 
                 <AnimatePresence mode="wait">
-                    {activeTab === 'Consolidation' && (
+                    {activeTab === 'Incoming Orders' && (
                         <motion.div 
                             key="consol"
                             variants={containerVariants}
@@ -91,31 +116,71 @@ const SupplierDashboard = () => {
                             exit={{ opacity: 0, x: -20 }}
                             className="space-y-4"
                         >
-                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 mb-5 ml-1">Weekly Consolidation Queue</h3>
-                            {consolidationData.map(order => (
-                                <motion.div 
-                                    key={order.id}
-                                    variants={itemVariants}
-                                    onClick={() => navigate(`/supplier/fulfillment/${order.id}`)}
-                                    className="bg-white p-5 rounded-[2.5rem] border border-outline-variant/10 flex items-center justify-between group cursor-pointer hover:shadow-xl transition-all shadow-sm"
-                                >
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1.5">
-                                            <h4 className="font-headline font-black text-on-surface">{order.item}</h4>
-                                            <span className="text-[8px] font-black text-on-surface uppercase tracking-widest bg-surface-container-high px-2 py-0.5 rounded-full border border-outline-variant/10">{order.total}</span>
+                            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 mb-5 ml-1">Pincode Match Queue</h3>
+                            {orders.length === 0 ? (
+                                <div className="text-center py-10 opacity-40 italic">No incoming orders in your region yet.</div>
+                            ) : (
+                                orders.map(order => (
+                                    <motion.div 
+                                        key={order._id}
+                                        variants={itemVariants}
+                                        className="bg-white p-5 rounded-[2.5rem] border border-outline-variant/10 flex flex-col gap-4 shadow-sm"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="font-headline font-black text-on-surface">{order.vendor?.displayName || 'Unknown Vendor'}</h4>
+                                                <p className="text-[9px] font-black text-primary uppercase tracking-widest leading-none mt-1">{order.b2bOrderId}</p>
+                                            </div>
+                                            <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${order.status === 'Pending' ? 'bg-amber-100 text-amber-600' : 'bg-primary/10 text-primary'}`}>
+                                                {order.status}
+                                            </span>
                                         </div>
-                                        <p className="text-[10px] text-on-surface/40 font-bold uppercase tracking-widest leading-none">Deadline: {order.deadline} • <span className="text-primary font-black">{order.status}</span></p>
-                                    </div>
-                                    <span className="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors text-sm">arrow_forward_ios</span>
-                                </motion.div>
-                            ))}
-                            <button 
-                                onClick={() => navigate('/supplier/rates')}
-                                className="w-full mt-6 py-5 bg-white border border-outline-variant/10 rounded-3xl text-[10px] font-black uppercase tracking-widest text-on-surface hover:bg-surface-container-low transition-all flex items-center justify-center gap-3 shadow-sm active:scale-95"
-                            >
-                                <span className="material-symbols-outlined text-sm">edit_note</span>
-                                Update Batch Rates
-                            </button>
+
+                                        <div className="space-y-2 border-y border-slate-50 py-3">
+                                            {order.items.map((item, i) => (
+                                                <div key={i} className="flex justify-between items-center text-[11px] font-bold">
+                                                    <span className="text-on-surface">x{item.quantity} {item.name}</span>
+                                                    <span className="text-on-surface-variant italic">₹{item.price * item.quantity}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-slate-400 uppercase">Total Value</span>
+                                                <span className="text-lg font-black text-on-surface">₹{order.totalAmount}</span>
+                                            </div>
+                                            
+                                            <div className="flex gap-2">
+                                                {order.status === 'Pending' && (
+                                                    <button 
+                                                        onClick={() => handleStatusUpdate(order._id, 'Accepted')}
+                                                        className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-black/10"
+                                                    >
+                                                        Accept
+                                                    </button>
+                                                )}
+                                                {order.status === 'Accepted' && (
+                                                    <button 
+                                                        onClick={() => handleStatusUpdate(order._id, 'Dispatched')}
+                                                        className="px-4 py-2 bg-primary text-white rounded-xl text-[9px] font-black uppercase tracking-widest"
+                                                    >
+                                                        Mark Dispatched
+                                                    </button>
+                                                )}
+                                                {order.status === 'Dispatched' && (
+                                                    <button 
+                                                        onClick={() => handleStatusUpdate(order._id, 'Delivered')}
+                                                        className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest"
+                                                    >
+                                                        Mark Delivered
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            )}
                         </motion.div>
                     )}
 
@@ -129,16 +194,16 @@ const SupplierDashboard = () => {
                             className="space-y-4"
                         >
                             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface/40 mb-5 ml-1">Historical Shipments</h3>
-                            {historicalData.map(ship => (
-                                <div key={ship.id} className="bg-white/80 p-5 rounded-[2.5rem] border border-outline-variant/10 flex items-center justify-between shadow-sm backdrop-blur-sm">
+                            {orders.filter(o => o.status === 'Delivered').map(ship => (
+                                <div key={ship._id} className="bg-white/80 p-5 rounded-[2.5rem] border border-outline-variant/10 flex items-center justify-between shadow-sm backdrop-blur-sm">
                                     <div>
                                         <div className="flex items-center gap-3 mb-1.5">
-                                            <h4 className="font-black text-on-surface">{ship.id}</h4>
-                                            <span className="text-[9px] font-black text-on-surface/40 uppercase tracking-widest">({ship.items} items)</span>
+                                            <h4 className="font-black text-on-surface">{ship.b2bOrderId}</h4>
+                                            <span className="text-[9px] font-black text-on-surface/40 uppercase tracking-widest">({ship.items.length} items)</span>
                                         </div>
-                                        <p className="text-[10px] text-on-surface/40 font-bold uppercase tracking-widest leading-none">{ship.date} • <span className={ship.status === 'Settled' ? 'text-green-600 font-black' : 'text-primary font-black'}>{ship.status}</span></p>
+                                        <p className="text-[10px] text-on-surface/40 font-bold uppercase tracking-widest leading-none">Delivered • <span className="text-green-600 font-black">Settled</span></p>
                                     </div>
-                                    <p className="text-lg font-black text-on-surface tracking-tight">{ship.total}</p>
+                                    <p className="text-lg font-black text-on-surface tracking-tight">₹{ship.totalAmount}</p>
                                 </div>
                             ))}
                         </motion.div>
@@ -146,20 +211,22 @@ const SupplierDashboard = () => {
                 </AnimatePresence>
             </main>
 
-            {/* Logistics Timeline Preview fixed at bottom */}
-            <div className="fixed bottom-32 left-6 right-6 p-5 bg-white border border-outline-variant/10 rounded-[2.5rem] shadow-2xl z-20">
-                <div className="flex items-center justify-between mb-4 px-1">
-                    <p className="text-[10px] font-black text-on-surface/40 uppercase tracking-widest leading-none">Next Batch Dispatch</p>
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none underline underline-offset-4">Sun Night</p>
+            {/* Logistics Pincode Guard fixed at bottom */}
+            <div className="fixed bottom-32 left-6 right-6 p-5 bg-slate-900 border border-white/5 rounded-[2.5rem] shadow-2xl z-20 overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-10 -mt-10" />
+                <div className="flex items-center justify-between mb-4 px-1 relative z-10">
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest leading-none">Active Area Guard</p>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-none">{user.supplierDetails?.pincode}</p>
                 </div>
-                <div className="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden relative z-10">
                     <motion.div 
                         initial={{ width: 0 }}
-                        animate={{ width: '65%' }}
+                        animate={{ width: '100%' }}
                         transition={{ duration: 1.5 }}
-                        className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(0,0,0,0.1)]"
+                        className="h-full bg-primary rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
                     />
                 </div>
+                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest mt-4 text-center">Monitoring real-time orders in your zone</p>
             </div>
         </div>
     );

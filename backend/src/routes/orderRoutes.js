@@ -19,17 +19,18 @@ import {
 
 const router = express.Router();
 
+// Diagnostic
+router.get('/trace', (req, res) => res.json({ msg: 'Order Router is ALIVE' }));
+
+// Get pool orders (unassigned) - MUST BE ABOVE /:id
+router.get('/pool', getPoolOrders);
+router.get('/vendor', getVendorOrders);
+router.get('/my', getMyOrders);
+router.post('/vendor-accept/:id', vendorAcceptOrder);
+
 // Create new order
 router.post('/', createOrder);
 router.post('/walk-in', createWalkInOrder);
-
-// Get my orders (Customer)
-router.get('/my', getMyOrders);
-
-// Get vendor assigned orders
-router.get('/vendor', getVendorOrders);
-router.get('/pool', getPoolOrders);
-router.post('/vendor-accept/:id', vendorAcceptOrder);
 
 // Update order status
 router.patch('/status/:id', updateOrderStatus);

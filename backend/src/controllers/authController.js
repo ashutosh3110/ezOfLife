@@ -2,15 +2,16 @@ import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// Mock OTP Generator
-const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+// Mock OTP Generator - Hardcoded to 123456 for Testing
+const generateOTP = () => '123456';
 
 export const requestOtp = async (req, res) => {
     try {
-        const { phone, channel, mode, role } = req.body; // role: 'Customer', 'Vendor', etc.
+        const { phone, channel, mode } = req.body; 
+        const requestedRole = req.body.role || 'Customer'; // Capitalized
 
-        if (!phone || !role) {
-            return res.status(400).json({ message: 'Phone number and role are required' });
+        if (!phone) {
+            return res.status(400).json({ message: 'Phone number is required' });
         }
 
         const otp = generateOTP();
@@ -20,18 +21,14 @@ export const requestOtp = async (req, res) => {
         let user = await User.findOne({ phone });
 
         // Admin Protection: Disable Signup for Admin
-        if (role === 'Admin' && mode === 'signup') {
-            return res.status(403).json({ message: 'Admin registration is disabled. Contact super-admin.' });
+        if (requestedRole === 'Admin' && mode === 'signup') {
+            return res.status(403).json({ message: 'Admin registration is disabled.' });
         }
 
-        // Logic Separation
+        // UNIFIED LOGIN LOGIC
         if (mode === 'login') {
             if (!user) {
                 return res.status(404).json({ message: 'Account not found. Please signup first.' });
-            }
-            // Role Mismatch Protection
-            if (user.role !== role) {
-                return res.status(403).json({ message: `This account is registered as a ${user.role}. Access denied.` });
             }
         }
 
@@ -39,26 +36,135 @@ export const requestOtp = async (req, res) => {
             return res.status(400).json({ message: `Account already exists as ${user.role}. Please login.` });
         }
 
-        // If Signup and user not found, create a new record with the specific role
+        // If Signup and user not found, create as Customer by default
         if (!user) {
-            user = new User({ phone, role });
+            user = new User({ phone, role: 'Customer' });
         }
 
         user.otp = otp;
         user.otpExpiry = otpExpiry;
         await user.save();
 
-        // Terminal Logging (as requested)
+        // Terminal Logging
         console.log('\n----------------------------------------');
-        console.log(`📡 [${channel || 'SYSTEM'}] OTP Request`);
+        console.log(`📡 [${channel || 'SYSTEM'}] OTP Request (UNIFIED)`);
         console.log(`📱 Phone: +91 ${phone}`);
         console.log(`🔑 OTP: ${otp}`);
+        console.log(`👤 Active Role: ${user.role}`);
         console.log('----------------------------------------\n');
 
-        res.status(200).json({ message: 'OTP sent successfully' });
+        res.status(200).json({ message: 'OTP sent successfully', role: user.role });
     } catch (err) {
         console.error('Request OTP Error:', err);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+// Toggle role to Vendor
+export const becomeVendor = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await User.findById(id);
+        
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        
+        if (user.role === 'Vendor') {
+            return res.status(400).json({ message: 'Already a vendor' });
+        }
+
+        user.role = 'Vendor';
+        user.status = 'pending'; // MUST BE in ['pending', 'approved', 'rejected']
+        await user.save();
+        console.log(`✅ [ROLE_UPGRADE] User ${user.phone} successfully upgraded to Vendor`);
+
+        res.status(200).json({ message: 'Upgraded to vendor successfully', role: user.role });
+    } catch (err) {
+        console.error('Become Vendor Error:', err);
+        res.status(500).json({ message: 'Error upgrading to vendor' });
+    }
+};
+
+// Toggle role to Supplier
+export const becomeSupplier = async (req, res) => {
+    console.log(`📩 [SUPPLIER_REG] Incoming request for ID: ${req.params.id}`);
+    try {
+        const { id } = req.params;
+        const { supplierName, businessName, address, city, pincode, gst } = req.body;
+        
+        console.log('📦 [SUPPLIER_REG] Body received:', { supplierName, businessName, city });
+        
+        // Parse JSON strings if they come as stringified objects in Multipart
+        let bankDetails = req.body.bankDetails;
+        if (typeof bankDetails === 'string') bankDetails = JSON.parse(bankDetails);
+        
+        let location = req.body.location;
+        if (typeof location === 'string') location = JSON.parse(location);
+
+        const user = await User.findById(id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (user.role === 'Supplier') {
+            return res.status(400).json({ message: 'Already a supplier' });
+        }
+
+        user.role = 'Supplier';
+        user.status = 'pending'; // Changed to pending for Admin approval flow
+        user.displayName = supplierName || user.displayName;
+        user.supplierDetails = {
+            businessName,
+            address,
+            city,
+            pincode,
+            gst
+        };
+        
+        if (bankDetails) {
+            user.bankDetails = bankDetails;
+        }
+
+        if (location) {
+            user.location = location;
+        }
+
+        // Handle Document Uploads from req.files (Local Storage)
+        const documentFiles = [];
+        if (req.files) {
+            if (req.files.gstCert) {
+                documentFiles.push({ type: 'GST Certificate', url: `/uploads/documents/${req.files.gstCert[0].filename}` });
+            }
+            if (req.files.udyogAadhar) {
+                documentFiles.push({ type: 'Udyog Aadhar', url: `/uploads/documents/${req.files.udyogAadhar[0].filename}` });
+            }
+            if (req.files.aadharCard) {
+                documentFiles.push({ type: 'Aadhar Card', url: `/uploads/documents/${req.files.aadharCard[0].filename}` });
+            }
+            if (req.files.addressProof) {
+                documentFiles.push({ type: 'Address Proof', url: `/uploads/documents/${req.files.addressProof[0].filename}` });
+            }
+        }
+        
+        if (documentFiles.length > 0) {
+            user.documents = documentFiles;
+        }
+
+        user.isProfileComplete = true; // Still marked complete, but status is pending
+        
+        await user.save();
+        console.log(`✅ [SUPPLIER_REGISTRATION] User ${user.phone} registered as Supplier (PENDING APPROVAL)`);
+
+        res.status(200).json({ 
+            message: 'Registration successful! Waiting for Admin verification.', 
+            user: {
+                id: user._id,
+                phone: user.phone,
+                role: user.role,
+                status: user.status,
+                isProfileComplete: user.isProfileComplete
+            }
+        });
+    } catch (err) {
+        console.error('Become Supplier Error:', err);
+        res.status(500).json({ message: 'Error upgrading to supplier' });
     }
 };
 
@@ -109,34 +215,46 @@ export const verifyOtp = async (req, res) => {
 // Complete Vendor Profile
 export const completeVendorProfile = async (req, res) => {
     try {
-        const { phone, shopName, address, gst } = req.body;
-        // Multipart text fields are strings, need parsing for JSON objects/arrays
+        const { phone, shopName, address, pincode, city, gst } = req.body;
         const location = req.body.location ? JSON.parse(req.body.location) : null;
         const services = req.body.services ? JSON.parse(req.body.services) : [];
+        const bankDetails = req.body.bankDetails ? JSON.parse(req.body.bankDetails) : null;
+
+        console.log(`🚀 [PROFILE_COMPLETE] Attempting for Phone: ${phone}`);
 
         const user = await User.findOne({ phone, role: 'Vendor' });
+        
         if (!user) {
+            console.error(`❌ [PROFILE_COMPLETE] User NOT found with Phone: ${phone} and Role: Vendor`);
+            // Extra check: is user there with different role?
+            const anyUser = await User.findOne({ phone });
+            if (anyUser) console.log(`ℹ️ [DEBUG] Found user with phone ${phone} but role is: ${anyUser.role}`);
+            else console.log(`ℹ️ [DEBUG] No user at all found with phone ${phone}`);
+            
             return res.status(404).json({ message: 'Vendor not found' });
         }
 
-        // Handle File Uploads from Cloudinary
+        // Handle File Uploads from Local Storage
         const documentFiles = [];
         if (req.files) {
             if (req.files.idCard) {
-                documentFiles.push({ type: 'Government ID', url: req.files.idCard[0].path });
+                documentFiles.push({ type: 'Government ID', url: `/uploads/documents/${req.files.idCard[0].filename}` });
             }
             if (req.files.businessProof) {
-                documentFiles.push({ type: 'Business proof', url: req.files.businessProof[0].path });
+                documentFiles.push({ type: 'Business proof', url: `/uploads/documents/${req.files.businessProof[0].filename}` });
             }
         }
 
         user.shopDetails = {
             name: shopName,
             address: address,
+            pincode: pincode,
+            city: city,
             gst: gst,
             services: services
         };
         user.location = location;
+        user.bankDetails = bankDetails;
         user.documents = documentFiles; // Store Cloudinary URLs
         user.isProfileComplete = true;
         user.status = 'pending'; 

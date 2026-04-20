@@ -16,8 +16,19 @@ const Dashboard = () => {
     const [acceptingId, setAcceptingId] = useState(null);
     const { fetchNotifications, addNotification } = useNotificationStore();
 
-    const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
-    const vendorId = vendorData?._id || vendorData?.id || '66112c3f8e4b8a2e5c8b4568';
+    const vendorDataRaw = localStorage.getItem('vendorData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+    const vendorData = JSON.parse(vendorDataRaw);
+    
+    // Smart ID Extraction: Check root, then check nested .user object
+    const vendorId = vendorData._id || vendorData.id || vendorData.user?._id || vendorData.user?.id;
+    
+    // Diagnostic log to see what exactly is in localStorage
+    console.log('📊 [DEBUG] Dashboard Identity Context:', { 
+        vendorId, 
+        hasVendorData: !!localStorage.getItem('vendorData'),
+        hasUser: !!localStorage.getItem('user'),
+        dataKeys: Object.keys(vendorData)
+    });
 
     const fetchAllData = async () => {
         try {
@@ -237,46 +248,112 @@ const Dashboard = () => {
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.9 }}
-                                        className="w-[300px] bg-slate-900 text-white rounded-[2.5rem] p-7 space-y-6 border border-white/5 shadow-2xl relative overflow-hidden shrink-0"
+                                        className="w-[320px] bg-white text-slate-900 rounded-[2.5rem] p-8 space-y-5 border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden shrink-0 group"
                                     >
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                                        <div className="flex justify-between items-start relative z-10">
-                                            <div>
-                                                <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{order.distance}km Away</p>
-                                                <h4 className="text-xl font-black tracking-tight mt-1 truncate max-w-[150px]">{order.customer?.displayName || 'Guest'}</h4>
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
+                                        
+                                        {/* Header: ID & Timer */}
+                                        <div className="flex justify-between items-center relative z-10">
+                                            <span className="text-[9px] font-black bg-slate-100 text-slate-500 px-3 py-1.5 rounded-xl uppercase tracking-[0.15em] border border-slate-200/50 shadow-sm">
+                                                {order.orderId}
+                                            </span>
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500/5 rounded-xl border border-rose-500/10">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                                                <p className="text-[9px] font-black text-rose-600 uppercase tracking-widest whitespace-nowrap">Expires in 00:45</p>
                                             </div>
-                                            <span className="text-[10px] font-black bg-white/10 px-3 py-1.5 rounded-xl uppercase tracking-widest">{order.orderId}</span>
                                         </div>
-                                        <div className="space-y-4 relative z-10">
-                                            <div className="flex items-start gap-3 opacity-60">
-                                                <span className="material-symbols-outlined text-[18px] mt-0.5">location_on</span>
-                                                <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed line-clamp-2">{order.address}</p>
+
+                                        {/* Title: Name & Express Badge */}
+                                        <div className="relative z-10">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <h4 className="text-xl font-black tracking-tight text-slate-900 truncate flex-1">{order.customer?.displayName || 'Guest User'}</h4>
+                                                <span className={`px-2.5 py-1 ${order.isExpress ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-slate-100 text-slate-500'} rounded-lg text-[8px] font-black uppercase tracking-widest`}>
+                                                    {order.isExpress ? '⚡ Express' : 'Standard'}
+                                                </span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-primary font-black">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-[20px]">payments</span>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5 flex items-center gap-1.5">
+                                                <span className="material-symbols-outlined text-[14px] text-primary">distance</span>
+                                                {order.distance} KM Away • {order.address?.split(',')[0]}
+                                            </p>
+                                        </div>
+
+                                        {/* Main Details Grid */}
+                                        <div className="space-y-3 relative z-10 py-1">
+                                            <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-3xl border border-slate-100 shadow-sm">
+                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm">
+                                                    <span className="material-symbols-outlined text-[20px]">schedule</span>
                                                 </div>
-                                                <p className="text-xl tracking-tighter">₹{order.totalAmount?.toFixed(0)}</p>
+                                                <div>
+                                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Pickup Slot</p>
+                                                    <p className="text-[11px] font-black text-slate-900 leading-tight mt-0.5">
+                                                        {typeof order.pickupSlot === 'object' && order.pickupSlot?.time 
+                                                            ? `${order.pickupSlot.date} | ${order.pickupSlot.time}` 
+                                                            : order.pickupSlot || '3:00 PM - 4:00 PM'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="flex items-center gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                                    <span className="material-symbols-outlined text-[18px] text-primary/60">local_laundry_service</span>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none">Service</p>
+                                                        <p className="text-[10px] font-black text-slate-900 truncate mt-1 leading-none">Full Wash</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                                    <span className="material-symbols-outlined text-[18px] text-primary/60">inventory_2</span>
+                                                    <div className="min-w-0">
+                                                        <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest leading-none">Load</p>
+                                                        <p className="text-[10px] font-black text-slate-900 truncate mt-1 leading-none">{order.items?.length || 1} Bag(s)</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 relative z-10">
+
+                                        {/* Footer Info: Payment, Photos, Earnings */}
+                                        <div className="pt-2 border-t border-slate-100 space-y-4 relative z-10">
+                                            <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
+                                                <div className="flex items-center gap-2 text-slate-400">
+                                                    <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                                                    Payment After Delivery
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-primary">
+                                                    <span className="material-symbols-outlined text-[14px]">photo_library</span>
+                                                    2 Photos
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between bg-slate-900 p-5 rounded-[1.8rem] shadow-xl shadow-slate-900/10 mt-2">
+                                                <div>
+                                                    <p className="text-[8px] font-black text-primary uppercase tracking-widest leading-none">Estimated Earnings</p>
+                                                    <p className="text-xl font-black text-white tracking-tighter mt-1 leading-none">₹{(order.totalAmount * 0.9).toFixed(0)}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[8px] font-black text-white/30 uppercase tracking-widest leading-none">Order Value</p>
+                                                    <p className="text-xs font-black text-white/40 line-through mt-1 leading-none">₹{order.totalAmount?.toFixed(0)}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Buttons */}
+                                        <div className="flex gap-3 relative z-10 pt-2">
                                             <button 
                                                 onClick={() => handleVendorAccept(order._id)}
                                                 disabled={acceptingId === order._id}
-                                                className={`flex-1 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all ${
-                                                    acceptingId === order._id ? 'bg-white/10 text-white/40 cursor-wait' : 'bg-white text-slate-900 hover:bg-slate-100 hover:scale-[1.02]'
+                                                className={`flex-[2] py-5 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-xl transition-all ${
+                                                    acceptingId === order._id ? 'bg-slate-100 text-slate-400 cursor-wait' : 'bg-primary text-white hover:scale-[1.02] active:scale-[0.98]'
                                                 }`}
                                             >
-                                                {acceptingId === order._id ? 'Accepting...' : 'Accept'}
+                                                {acceptingId === order._id ? 'Validating...' : 'Accept Order'}
                                             </button>
                                             <button 
                                                 onClick={() => {
-                                                    // Logic to dismiss/hide this specific broadcast card locally
                                                     setPoolOrders(prev => prev.filter(o => o._id !== order._id));
                                                 }}
-                                                className="px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white/10 text-white hover:bg-white/20 transition-all"
+                                                className="flex-1 py-5 rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all"
                                             >
-                                                Decline
+                                                Not Now
                                             </button>
                                         </div>
                                     </motion.div>
@@ -309,16 +386,6 @@ const Dashboard = () => {
                                 <span className="material-symbols-outlined text-xl">campaign</span>
                             </div>
                             <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Promos</span>
-                        </motion.button>
-                        <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/vendor/fulfillment')}
-                            className="bg-white p-4 rounded-3xl border border-slate-300 shadow-sm flex flex-col items-center gap-2 hover:border-secondary/30 transition-all"
-                        >
-                            <div className="w-10 h-10 rounded-2xl bg-secondary/5 flex items-center justify-center text-secondary">
-                                <span className="material-symbols-outlined text-xl">inventory_2</span>
-                            </div>
-                            <span className="text-[8px] font-black uppercase tracking-widest leading-none text-center">Supply</span>
                         </motion.button>
                         <motion.button 
                             whileTap={{ scale: 0.95 }}

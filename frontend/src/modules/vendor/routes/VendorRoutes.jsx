@@ -25,6 +25,7 @@ import VendorOrderHistory from '../pages/VendorOrderHistory';
 import WalkInOrderPage from '../pages/WalkInOrderPage';
 import PromotionManagerPage from '../pages/PromotionManagerPage';
 import B2BFulfillmentPage from '../pages/B2BFulfillmentPage';
+import B2BOrderHistory from '../pages/B2BOrderHistory';
 import VendorReviews from '../pages/VendorReviews';
 import JobManagerPage from '../pages/JobManagerPage';
 
@@ -40,10 +41,10 @@ const VendorRoutes = () => {
   return (
     <Routes>
       <Route element={<VendorLayout />}>
-        {/* Auth Flow */}
-        <Route path="/splash" element={<VendorSplash />} />
-        <Route path="/auth" element={<VendorAuth />} />
-        <Route path="/otp" element={<VendorOtp />} />
+        {/* Auth Flow - REDIRECTED TO UNIFIED LOGIN */}
+        <Route path="/splash" element={<Navigate to="/user/auth" replace />} />
+        <Route path="/auth" element={<Navigate to="/user/auth" replace />} />
+        <Route path="/otp" element={<Navigate to="/user/auth" replace />} />
 
         {/* Registration Flow */}
         <Route path="/register" element={<ShopDetails />} />
@@ -66,6 +67,7 @@ const VendorRoutes = () => {
         <Route path="/walk-in" element={<WalkInOrderPage />} />
         <Route path="/promotions" element={<PromotionManagerPage />} />
         <Route path="/fulfillment" element={<B2BFulfillmentPage />} />
+        <Route path="/material-orders" element={<B2BOrderHistory />} />
         <Route path="/reviews" element={<VendorReviews />} />
         <Route path="/jobs" element={<JobManagerPage />} />
         

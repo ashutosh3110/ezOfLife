@@ -1,8 +1,10 @@
+console.log('🔥 SERVER IS BOOTING WITH LATEST B2B ROUTING CODE (APR 20)...');
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import http from 'http';
 
 // Route imports
 import authRoutes from './src/routes/authRoutes.js';
@@ -18,14 +20,13 @@ import mediaRoutes from './src/routes/mediaRoutes.js';
 import partnershipRoutes from './src/routes/partnershipRoutes.js';
 import promotionRoutes from './src/routes/promotionRoutes.js';
 import jobRoutes from './src/routes/jobRoutes.js';
+import b2bOrderRoutes from './src/routes/b2bOrderRoutes.js';
+import masterServiceRoutes from './src/routes/masterServiceRoutes.js';
 import { addSpecialist, getAllSpecialists, deleteSpecialist, createRequisition, getAllRequisitions, assignRequisition } from './src/controllers/laborController.js';
 
-import http from 'http';
 import { initSocket } from './src/socket.js';
 
 dotenv.config();
-console.log('--- 🚀 SERVER STARTING UP ---');
-console.log('--- 🔧 Loading Partnership & Labor Routes ---');
 
 const app = express();
 const server = http.createServer(app);
@@ -39,17 +40,13 @@ app.use(express.json());
 app.use(morgan('dev'));
 app.use('/uploads', express.static('uploads'));
 
+// Global Traffic Monitor
+app.use((req, res, next) => {
+    console.log(`📡 [TRAFFIC] ${new Date().toLocaleTimeString()} | ${req.method} ${req.url}`);
+    next();
+});
+
 // Routes
-app.use('/api/partnerships', partnershipRoutes);
-
-// Labor Routes - Direct Registration
-app.post('/api/labor/add', addSpecialist);
-app.get('/api/labor/all', getAllSpecialists);
-app.delete('/api/labor/:id', deleteSpecialist);
-app.post('/api/labor/place-request', createRequisition);
-app.get('/api/labor/active-requests', getAllRequisitions);
-app.patch('/api/labor/place-request/:id/assign', assignRequisition);
-
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/orders', orderRoutes);
@@ -60,8 +57,22 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/media', mediaRoutes);
+console.log('🛠️ [DEBUG] Loading Master Service Routes...', typeof masterServiceRoutes);
+app.get('/api/master-test', (req, res) => res.json({ msg: 'Master Route System Active' }));
+app.use('/api/master-services', masterServiceRoutes);
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/partnerships', partnershipRoutes);
+console.log('🛠️ [DEBUG] Loading B2B Order Routes...', typeof b2bOrderRoutes);
+app.use('/api/b2b-orders', b2bOrderRoutes);
+
+// Labor Routes
+app.post('/api/labor/add', addSpecialist);
+app.get('/api/labor/all', getAllSpecialists);
+app.delete('/api/labor/:id', deleteSpecialist);
+app.post('/api/labor/place-request', createRequisition);
+app.get('/api/labor/active-requests', getAllRequisitions);
+app.patch('/api/labor/place-request/:id/assign', assignRequisition);
 
 // Database Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ezoflife';
@@ -69,23 +80,145 @@ mongoose.connect(MONGODB_URI)
     .then(() => console.log('✅ Connected to MongoDB'))
     .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
-// Basic Route
+app.get('/api/maintenance/seed-vendor-promos', async (req, res) => {
+    try {
+        const User = (await import('./src/models/User.js')).default;
+        const Promotion = (await import('./src/models/Promotion.js')).default;
+        
+        // Find both target vendors
+        const vendor1 = await User.findOne({ phone: '9988776655' });
+        const vendor2 = await User.findById('69e0f69491a1f019d22b2997');
+
+        const vendors = [vendor1, vendor2].filter(v => v);
+        if (vendors.length === 0) return res.status(404).json({ error: 'No target vendors found' });
+
+        const now = new Date();
+        const nextMonth = new Date(now.setMonth(now.getMonth() + 1));
+        
+        let totalCreated = 0;
+        for (const vendor of vendors) {
+            const promos = [
+                { title: 'Grand Opening', code: `OPEN50_${vendor._id.toString().slice(-4)}`, discountType: 'Flat', discountValue: 50, minOrderValue: 200, usageLimit: 500, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Weekend Clean', code: `WASH20_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 20, minOrderValue: 500, usageLimit: 200, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Premium Care', code: `LUXE10_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 10, minOrderValue: 1000, usageLimit: 100, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Dry Clean Special', code: `DC100_${vendor._id.toString().slice(-4)}`, discountType: 'Flat', discountValue: 100, minOrderValue: 800, usageLimit: 150, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Flash Sale', code: `FLASH30_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 30, minOrderValue: 400, usageLimit: 500, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Referral Bonus', code: `REF25_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 25, minOrderValue: 300, usageLimit: 1000, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Loyalty Perk', code: `LOYAL20_${vendor._id.toString().slice(-4)}`, discountType: 'Flat', discountValue: 20, minOrderValue: 0, usageLimit: 5000, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Bulk Wash', code: `BULK15_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 15, minOrderValue: 1200, usageLimit: 300, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Night Owl', code: `NIGHT10_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 10, minOrderValue: 200, usageLimit: 100, expiryDate: nextMonth, vendorId: vendor._id },
+                { title: 'Super Saver', code: `SAVE40_${vendor._id.toString().slice(-4)}`, discountType: 'Percentage', discountValue: 40, minOrderValue: 600, usageLimit: 500, expiryDate: nextMonth, vendorId: vendor._id }
+            ];
+
+            for (const p of promos) {
+                await Promotion.findOneAndUpdate({ code: p.code }, p, { upsert: true });
+                totalCreated++;
+            }
+        }
+        
+        res.json({ message: `Successfully seeded campaigns for ${vendors.length} vendors. Total items: ${totalCreated}` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/maintenance/seed-test-users', async (req, res) => {
+    try {
+        const User = (await import('./src/models/User.js')).default;
+        const testUsers = [
+            // Customers
+            { phone: '9999999991', role: 'Customer', status: 'approved', displayName: 'Simran Customer 1', address: 'Indore, MP' },
+            { phone: '9999999992', role: 'Customer', status: 'approved', displayName: 'Rahul Customer 2', address: 'Bhopal, MP' },
+            // Vendors
+            { 
+                phone: '9999999993', role: 'Vendor', status: 'approved', displayName: 'Sandeep Vendor 1', 
+                shopDetails: { name: 'Sandeep Laundry', address: 'Vijay Nagar', pincode: '452010', city: 'Indore', gst: 'GST9933' },
+                isProfileComplete: true
+            },
+            { 
+                phone: '9999999994', role: 'Vendor', status: 'approved', displayName: 'Amit Vendor 2', 
+                shopDetails: { name: 'Amit Dry Clean', address: 'Saket', pincode: '452001', city: 'Indore', gst: 'GST9944' },
+                isProfileComplete: true
+            },
+            // Suppliers
+            { 
+                phone: '9999999995', role: 'Supplier', status: 'approved', displayName: 'Vikram Supplier 1', 
+                supplierDetails: { businessName: 'Vikram Materials', address: 'Industrial Area', pincode: '452001', city: 'Indore', gst: 'GST9955' },
+                isProfileComplete: true
+            },
+            { 
+                phone: '9999999996', role: 'Supplier', status: 'approved', displayName: 'Neha Supplier 2', 
+                supplierDetails: { businessName: 'Neha Logistics', address: 'Palasia', pincode: '452010', city: 'Indore', gst: 'GST9966' },
+                isProfileComplete: true
+            }
+        ];
+
+        for (const u of testUsers) {
+            await User.findOneAndUpdate({ phone: u.phone }, u, { upsert: true, new: true });
+        }
+
+        res.json({ message: '✅ Successfully seeded 6 test users (2 Cust, 2 Vend, 2 Supp).', users: testUsers.map(u => u.phone) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/maintenance/seed-materials', async (req, res) => {
+    try {
+        const Material = (await import('./src/models/Material.js')).default;
+        const materials = [
+            { name: 'Ultra-Whiteness Detergent', price: 450, category: 'Cleaning', stock: '250 kg', icon: 'shampoo', status: 'active' },
+            { name: 'Soft-Touch Fabric Softener', price: 320, category: 'Cleaning', stock: '120 L', icon: 'opacity', status: 'active' },
+            { name: 'Eco-Safe Stain Remover', price: 150, category: 'Cleaning', stock: '45 Units', icon: 'pill', status: 'active' },
+            { name: 'Premium Wooden Hangers', price: 25, category: 'Packaging', stock: '500 Pcs', icon: 'apparel', status: 'active' },
+            { name: 'Bio-Degradable Poly Bags', price: 5, category: 'Packaging', stock: '2000 Units', icon: 'package', status: 'active' },
+            { name: 'Microfiber Lint Brushes', price: 85, category: 'Tools', stock: '15 Units', icon: 'brush', status: 'active' },
+            { name: 'Industrial Ironing Board Cover', price: 450, category: 'Tools', stock: '5 Units', icon: 'layers', status: 'active' },
+            { name: 'Fragrance Boost Beads', price: 550, category: 'Cleaning', stock: '30 kg', icon: 'bubble_chart', status: 'active' },
+            { name: 'Leather Conditioner Pro', price: 950, category: 'Specialty', stock: '12 L', icon: 'sanitizer', status: 'active' },
+            { name: 'Anti-Static Dryer Sheets', price: 220, category: 'Cleaning', stock: '80 Packs', icon: 'style', status: 'active' },
+            { name: 'Safety Pins (Bulk)', price: 45, category: 'Tools', stock: '100 Boxes', icon: 'push_pin', status: 'active' },
+            { name: 'Mesh Laundry Bags (Small)', price: 35, category: 'Packaging', stock: '150 Pcs', icon: 'grid_view', status: 'active' }
+        ];
+
+        for (const m of materials) {
+            await Material.findOneAndUpdate({ name: m.name }, m, { upsert: true });
+        }
+        res.json({ message: `✅ Successfully seeded ${materials.length} catalog materials.` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/maintenance/seed-labor', async (req, res) => {
+    try {
+        const Specialist = (await import('./src/models/Specialist.js')).default;
+        const specialists = [
+            { name: 'Master Ironing Expert', rate: '₹750/shift', icon: 'iron', description: 'Expert in high-pressure steam ironing and delicate fabrics.' },
+            { name: 'Stain Removal Specialist', rate: '₹850/shift', icon: 'colorize', description: 'Certified in chemical stain identification and removal.' },
+            { name: 'Bulk Washing Operator', rate: '₹600/shift', icon: 'local_laundry_service', description: 'Experienced in 50kg+ industrial machine operations.' },
+            { name: 'Senior Delivery Captain', rate: '₹550/shift', icon: 'moped', description: 'Skilled navigator with 5+ years in logistics delivery.' },
+            { name: 'Shop Operations Manager', rate: '₹1200/shift', icon: 'manage_accounts', description: 'Handles staff, inventory, and end-to-end shop flow.' },
+            { name: 'Dry Cleaning Technician', rate: '₹950/shift', icon: 'dry_cleaning', description: 'Expert in solvent-based cleaning and finishing.' },
+            { name: 'Quality Control Auditor', rate: '₹800/shift', icon: 'fact_check', description: 'Ensures 100% garment hygiene and spotting standards.' },
+            { name: 'Customer Experience Lead', rate: '₹700/shift', icon: 'support_agent', description: 'Handles walk-in clients and complex order support.' }
+        ];
+
+        for (const s of specialists) {
+            await Specialist.findOneAndUpdate({ name: s.name }, s, { upsert: true });
+        }
+        res.json({ message: `✅ Successfully seeded ${specialists.length} skilled labor types.` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/', (req, res) => {
-    res.json({ message: 'Ez of Life API is running...' });
+    res.json({ message: 'Ez of Life API is running on SECURE PORT 5001...' });
 });
 
-// Final 404 Handler for diagnostics
-app.use((req, res) => {
-    console.log(`🔍 404 occurred for: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-        message: 'Route not found on this server instance',
-        path: req.originalUrl,
-        method: req.method
-    });
-});
-
-// API Routes
-const PORT = process.env.PORT || 5000;
+// Port
+const PORT = 5001;
 server.listen(PORT, () => {
-    console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });

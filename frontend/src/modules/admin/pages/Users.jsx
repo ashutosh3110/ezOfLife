@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Users as UsersIcon, UserPlus, Mail, ShoppingBag, IndianRupee, MoreHorizontal, ShieldAlert, UserCheck, Activity, Star, Zap, Target, Phone } from 'lucide-react';
+import { Users as UsersIcon, UserPlus, Mail, ShoppingBag, IndianRupee, MoreHorizontal, ShieldAlert, UserCheck, Activity, Star, Zap, Target, Phone, X, Save } from 'lucide-react';
 import { adminApi } from '../../../lib/api';
 import PageHeader from '../components/common/PageHeader';
 import DataGrid from '../components/tables/DataGrid';
@@ -9,20 +9,57 @@ import MetricRow from '../components/cards/MetricRow';
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    displayName: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
+  const [message, setMessage] = useState(null);
+
+  const fetchCustomers = async () => {
+    setLoading(true);
+    try {
+      const res = await adminApi.getCustomers();
+      setUsers(res);
+    } catch (err) {
+      console.error('Fetch customers error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await adminApi.getCustomers();
-        setUsers(res);
-      } catch (err) {
-        console.error('Fetch customers error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCustomers();
   }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setMessage(null);
+    try {
+      const res = await adminApi.registerCustomer(formData);
+      if (res.user) {
+        setMessage({ type: 'success', text: 'Customer registered successfully!' });
+        setFormData({ displayName: '', phone: '', email: '', address: '' });
+        fetchCustomers();
+        setTimeout(() => setShowModal(false), 1500);
+      } else {
+        setMessage({ type: 'error', text: res.message || 'Registration failed' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Server error occurred' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const userStats = useMemo(() => [
     { label: 'Total Registered Users', value: users.length, change: '+0', trend: 'up', icon: UsersIcon },
@@ -101,7 +138,7 @@ export default function Users() {
       <PageHeader 
         title="Users" 
         actions={[
-          { label: 'Register New User', icon: UserPlus, variant: 'primary' }
+          { label: 'Register New User', icon: UserPlus, variant: 'primary', onClick: () => setShowModal(true) }
         ]}
       />
 
@@ -121,8 +158,103 @@ export default function Users() {
           columns={userColumns}
           data={users}
           onAction={(row) => console.log('Viewing user detail', row.id)}
+          loading={loading}
         />
       </div>
+
+      {/* Registration Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowModal(false)} />
+          <div className="bg-white border-4 border-slate-900 w-full max-w-lg relative z-10 shadow-[8px_8px_0px_0px_rgba(15,23,42,1)] overflow-hidden">
+            <div className="bg-slate-900 p-4 flex items-center justify-between text-white">
+              <div className="flex items-center gap-3">
+                <UserPlus size={20} className="text-primary" />
+                <h2 className="font-black uppercase tracking-tighter text-lg italic">Register New Customer</h2>
+              </div>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="hover:rotate-90 transition-transform duration-300"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleRegister} className="p-6 space-y-4">
+              {message && (
+                <div className={`p-3 border-2 font-bold uppercase tracking-widest text-[10px] ${message.type === 'success' ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-rose-50 border-rose-500 text-rose-700'}`}>
+                   {message.text}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Full Name</label>
+                <input 
+                  required
+                  type="text"
+                  name="displayName"
+                  value={formData.displayName}
+                  onChange={handleInputChange}
+                  className="w-full bg-slate-50 border-2 border-slate-200 p-3 text-xs font-bold focus:border-slate-900 focus:bg-white outline-none transition-all uppercase"
+                  placeholder="Rahul Sharma"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Phone Number</label>
+                  <input 
+                    required
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full bg-slate-50 border-2 border-slate-200 p-3 text-xs font-bold focus:border-slate-900 focus:bg-white outline-none transition-all tabular-nums"
+                    placeholder="70000XXXXX"
+                    maxLength={10}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Email (Optional)</label>
+                  <input 
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full bg-slate-50 border-2 border-slate-200 p-3 text-xs font-bold focus:border-slate-900 focus:bg-white outline-none transition-all"
+                    placeholder="rahul@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Address (Optional)</label>
+                <textarea 
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  rows={2}
+                  className="w-full bg-slate-50 border-2 border-slate-200 p-3 text-xs font-bold focus:border-slate-900 focus:bg-white outline-none transition-all uppercase resize-none"
+                  placeholder="Sector 56, Gurgaon..."
+                />
+              </div>
+
+              <button 
+                disabled={submitting}
+                type="submit" 
+                className="w-full bg-primary hover:bg-slate-900 text-white font-black uppercase py-4 tracking-[0.2em] shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+              >
+                {submitting ? 'Registering...' : (
+                  <>
+                    <Save size={18} className="group-hover:scale-125 transition-transform" /> 
+                    Save Customer
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

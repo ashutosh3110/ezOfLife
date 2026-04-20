@@ -23,12 +23,13 @@ const SupplierLayout = () => {
           <motion.div 
             initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[90%] max-w-md border border-black/5"
+            className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[95%] max-w-lg border border-black/5"
           >
             <NavItem icon="dashboard" label="Hub" path="/supplier/dashboard" active={location.pathname === '/supplier/dashboard'} />
-            <NavItem icon="inventory_2" label="Tickets" path="/supplier/rates" active={location.pathname === '/supplier/rates'} />
+            <NavItem icon="inventory_2" label="Stock" path="/supplier/rates" active={location.pathname === '/supplier/rates'} />
             <NavItem icon="local_shipping" label="Logistics" path="/supplier/logistics" active={location.pathname === '/supplier/logistics'} />
             <NavItem icon="account_balance_wallet" label="Wallet" path="/supplier/wallet" active={location.pathname === '/supplier/wallet'} />
+            <NavItem icon="person" label="Profile" path="/supplier/profile" active={location.pathname === '/supplier/profile'} />
           </motion.div>
         </nav>
       )}
@@ -42,7 +43,7 @@ const NavItem = ({ icon, label, path, active }) => {
   return (
     <button
       onClick={() => navigate(path)}
-      className={`relative flex flex-col items-center justify-center rounded-full px-5 py-2.5 transition-colors duration-300 ${
+      className={`relative flex flex-col items-center justify-center rounded-full px-3 py-2.5 transition-colors duration-300 ${
         active ? 'text-white' : 'text-slate-400 hover:bg-slate-50'
       }`}
     >

@@ -10,15 +10,26 @@ const defaultCenter = { lat: 28.4595, lng: 77.0266 }; // Gurgaon
 
 const ProfileCreationPage = () => {
     const navigate = useNavigate();
-    const [name, setName] = useState('');
-    const [address, setAddress] = useState('');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const mergedUser = { ...user, ...userData };
+
+    const [name, setName] = useState(mergedUser.displayName || '');
+    const [address, setAddress] = useState(mergedUser.address || '');
     const [isLocating, setIsLocating] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showMapPicker, setShowMapPicker] = useState(false);
 
+    // Initial check for redirection
+    React.useEffect(() => {
+        if (mergedUser.displayName && mergedUser.address && !isLoading) {
+            navigate('/user/home');
+        }
+    }, [mergedUser, navigate]);
+
     // Map States
-    const [mapLocation, setMapLocation] = useState(defaultCenter);
-    const [mapAddress, setMapAddress] = useState('');
+    const [mapLocation, setMapLocation] = useState(mergedUser.location || defaultCenter);
+    const [mapAddress, setMapAddress] = useState(mergedUser.address || '');
     const searchBoxRef = useRef(null);
 
     const { isLoaded } = useJsApiLoader({
@@ -26,8 +37,7 @@ const ProfileCreationPage = () => {
         libraries
     });
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const userId = user.id || user._id; 
+    const userId = mergedUser.id || mergedUser._id; 
     const riderId = userId || '66112c3f8e4b8a2e5c8b4569';
     const reverseGeocode = async (lat, lng) => {
         if (!window.google) return;

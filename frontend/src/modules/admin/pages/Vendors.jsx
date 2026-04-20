@@ -23,7 +23,8 @@ import {
   Edit,
   Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mockAdminData } from '../data/mockData';
@@ -48,6 +49,7 @@ export default function Vendors() {
   });
 
   const [selectedVendorForView, setSelectedVendorForView] = useState(null);
+  const [selectedVendorForBank, setSelectedVendorForBank] = useState(null);
   const [realVendors, setRealVendors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -67,7 +69,8 @@ export default function Vendors() {
         email: v.email,
         phone: v.phone,
         gst: v.shopDetails?.gst,
-        address: v.address || v.shopDetails?.address
+        address: v.address || v.shopDetails?.address,
+        bankDetails: v.bankDetails
       }));
       setRealVendors(mapped);
     } catch (err) {
@@ -154,14 +157,32 @@ export default function Vendors() {
             <Eye size={14} />
           </button>
           <button 
-            onClick={(e) => { e.stopPropagation(); alert('Edit logic coming soon'); }}
+            onClick={(e) => { e.stopPropagation(); setSelectedVendorForBank(row); }}
+            className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-sm transition-all"
+            title="Bank Details"
+          >
+            <CreditCard size={14} />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); navigate(`/admin/vendors/${row.id}`); }}
             className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-sm transition-all"
             title="Edit Vendor"
           >
             <Edit size={14} />
           </button>
           <button 
-            onClick={(e) => { e.stopPropagation(); alert('Delete logic coming soon'); }}
+            onClick={async (e) => { 
+                e.stopPropagation(); 
+                if (window.confirm(`CRITICAL: Are you sure you want to delete ${row.name}? This will permanently remove ALL their data including Jobs, Orders, and Promotions. This action cannot be undone.`)) {
+                    try {
+                        await adminApi.deleteVendor(row.id);
+                        alert('Vendor and all associated data deleted successfully');
+                        fetchVendors();
+                    } catch (err) {
+                        alert('Failed to delete vendor');
+                    }
+                }
+            }}
             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-sm transition-all"
             title="Delete Vendor"
           >
@@ -217,7 +238,6 @@ export default function Vendors() {
           title="Master Vendor Registry"
           columns={vendorColumns}
           data={vendors}
-          onAction={(row) => navigate(`/admin/vendors/${row.id}`)}
         />
       </div>
 
@@ -443,6 +463,98 @@ export default function Vendors() {
                     Close Profile
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Bank Details Modal */}
+      <AnimatePresence>
+        {selectedVendorForBank && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-lg rounded-sm shadow-2xl border border-slate-100 overflow-hidden"
+            >
+              <div className="px-8 py-6 border-b border-slate-800 flex items-center justify-between bg-emerald-950">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 text-white flex items-center justify-center rounded-sm">
+                    <CreditCard size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black text-white uppercase tracking-[0.2em] leading-none mb-1">Settlement Profile</h2>
+                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest leading-none">Financial verified data</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedVendorForBank(null)} className="p-2 text-slate-400 hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-8">
+                {selectedVendorForBank.bankDetails ? (
+                  <div className="space-y-6">
+                    <div className="p-6 bg-emerald-50/50 border border-emerald-100 rounded-sm space-y-4">
+                       <div className="flex items-center gap-3 mb-2">
+                          <IndianRupee size={16} className="text-emerald-600" />
+                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em]">Primary Bank Account</span>
+                       </div>
+
+                       <div className="space-y-4">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Account Holder</p>
+                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                                {selectedVendorForBank.bankDetails.accountHolderName || 'N/A'}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Account Number</p>
+                              <p className="text-sm font-black text-slate-900 tabular-nums">
+                                  {selectedVendorForBank.bankDetails.accountNumber || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">IFSC Code</p>
+                              <p className="text-sm font-black text-slate-900 uppercase tracking-widest">
+                                  {selectedVendorForBank.bankDetails.ifscCode || 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bank Entity Name</p>
+                            <p className="text-sm font-black text-slate-900 uppercase tracking-tight">
+                                {selectedVendorForBank.bankDetails.bankName || 'N/A'}
+                            </p>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 rounded-sm border border-amber-100">
+                       <ShieldClose size={14} className="text-amber-600" />
+                       <p className="text-[9px] font-bold text-amber-900 uppercase leading-relaxed">
+                          Verify these details manually before initiating any RTGS/NEFT settlement batch.
+                       </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-4 bg-slate-50 border border-dashed border-slate-200 rounded-sm">
+                      <AlertCircle size={32} className="text-slate-300" />
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">No Bank Data Registered</p>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => setSelectedVendorForBank(null)}
+                  className="w-full py-4 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.3em] rounded-sm hover:bg-black transition-all"
+                >
+                  Close Secure View
+                </button>
               </div>
             </motion.div>
           </div>

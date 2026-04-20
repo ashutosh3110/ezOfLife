@@ -151,7 +151,7 @@ const AuthPage = () => {
                           if (isLoginValid) {
                             setApiError('');
                             try {
-                              const response = await authApi.requestOtp(loginPhone, otpChannel, 'login', 'Customer');
+                              const response = await authApi.requestOtp(loginPhone, otpChannel, 'login');
                               if (response.message === 'OTP sent successfully') {
                                 navigate('/user/otp', { state: { phone: loginPhone, channel: otpChannel } });
                               } else {
@@ -235,7 +235,7 @@ const AuthPage = () => {
                           if (isSignupValid) {
                             setApiError('');
                             try {
-                              const response = await authApi.requestOtp(signupPhone, otpChannel, 'signup', 'Customer');
+                              const response = await authApi.requestOtp(signupPhone, otpChannel, 'signup');
                               if (response.message === 'OTP sent successfully') {
                                 navigate('/user/otp', { state: { phone: signupPhone, channel: otpChannel } });
                               } else {

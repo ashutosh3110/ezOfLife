@@ -5,6 +5,8 @@ import axios from 'axios';
 import Notification from '../models/Notification.js';
 import fs from 'fs';
 import { getIO } from '../socket.js';
+import { sendWalkInWhatsApp } from '../utils/whatsappHelper.js';
+
 
 const logToFile = (msg) => {
     try {
@@ -384,7 +386,10 @@ export const getPoolOrders = async (req, res) => {
     try {
         const { vendorId } = req.query;
         const vendor = await User.findById(vendorId);
-        if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
+        if (!vendor) {
+            console.log(`⚠️ [POOL] Vendor lookup FAILED for ID: ${vendorId}`);
+            return res.status(404).json({ message: 'Vendor not found in database. Check your token/session.' });
+        }
 
         const vLat = vendor.location?.lat || 0;
         const vLng = vendor.location?.lng || 0;
@@ -685,6 +690,9 @@ export const createWalkInOrder = async (req, res) => {
         });
 
         await newOrder.save();
+        
+        // WhatsApp Notification (Simulated in terminal)
+        sendWalkInWhatsApp(customerPhone, newOrder.orderId);
         
         // Notify the generated customer shadow account (optional)
         const io = getIO();

@@ -50,15 +50,15 @@ export default function Dashboard() {
 
   const financialMetrics = useMemo(() => [
     { label: 'Gross Merchandise (GMV)', value: `₹${(liveStats?.totalRevenue || 0).toLocaleString()}`, delta: '+14.2%', icon: TrendingUp, color: 'white' },
-    { label: 'Platform Net Yield', value: `₹${Math.floor((liveStats?.totalRevenue || 0) * 0.15).toLocaleString()}`, delta: '15% Fee Base', icon: null, color: 'sky-400' },
     { label: 'Active Vendors', value: liveStats?.activeVendors || 0, delta: `${liveStats?.pendingApprovals || 0} Pending`, icon: Store, color: 'white' },
+    { label: 'Industrial Suppliers', value: liveStats?.totalSuppliers || 0, delta: `${liveStats?.pendingSuppliers || 0} Pending`, icon: Zap, color: 'sky-400' },
     { label: 'Total Users', value: liveStats?.totalUsers || 0, delta: 'Verified', icon: UsersIcon, color: 'white' }
   ], [liveStats]);
 
   const healthStats = useMemo(() => [
     { label: 'API Latency', value: '38ms', icon: Cpu },
-    { label: 'Uptime', value: '99.99%', icon: Monitor },
-    { label: 'Active Riders', value: liveStats?.totalRiders || 0, icon: Activity }
+    { label: 'Active Riders', value: liveStats?.totalRiders || 0, icon: Activity },
+    { label: 'Pending Approvals', value: (liveStats?.pendingApprovals || 0) + (liveStats?.pendingSuppliers || 0), icon: Clock }
   ], [liveStats]);
 
   const alerts = useMemo(() => [

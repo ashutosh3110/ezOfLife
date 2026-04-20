@@ -1,0 +1,72 @@
+import MasterService from '../models/MasterService.js';
+
+export const createMasterService = async (req, res) => {
+    try {
+        const { name, icon, basePrice, category, description } = req.body;
+        const exists = await MasterService.findOne({ name });
+        if (exists) return res.status(400).json({ message: 'Service already exists' });
+
+        const service = new MasterService({ name, icon, basePrice, category, description });
+        await service.save();
+        res.status(201).json(service);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const getAllMasterServices = async (req, res) => {
+    try {
+        const services = await MasterService.find({ isActive: true });
+        res.status(200).json(services);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const updateMasterService = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updated = await MasterService.findByIdAndUpdate(id, req.body, { new: true });
+        res.status(200).json(updated);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const deleteMasterService = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await MasterService.findByIdAndDelete(id);
+        res.status(200).json({ message: 'Service deleted' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+export const getVendorPricingReport = async (req, res) => {
+    try {
+        const { serviceId } = req.params;
+        const User = (await import('../models/User.js')).default;
+        
+        // Find all vendors who have this service in their shopDetails
+        // We filter manually because shopDetails.services is a nested array of mixed objects
+        const vendors = await User.find({ role: 'Vendor' });
+        
+        const report = vendors.map(v => {
+            const serviceMatch = v.shopDetails?.services?.find(s => s.id === serviceId || s.id?.toString() === serviceId);
+            if (serviceMatch) {
+                return {
+                    vendorName: v.shopDetails.name || v.name,
+                    phone: v.phone,
+                    vendorRate: serviceMatch.vendorRate,
+                    adminRate: serviceMatch.adminRate
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        res.status(200).json(report);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};

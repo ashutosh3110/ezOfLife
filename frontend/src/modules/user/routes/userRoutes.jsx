@@ -36,6 +36,7 @@ import RegisterAsVendorPage from '../pages/RegisterAsVendorPage';
 import MaterialsCatalogPage from '../pages/MaterialsCatalogPage';
 import SupportTicketsPage from '../pages/SupportTicketsPage';
 import FeedbackForm from '../pages/FeedbackForm';
+import RegisterAsSupplierPage from '../pages/RegisterAsSupplierPage';
 
 
 import UserLayout from '../layouts/UserLayout';
@@ -77,6 +78,7 @@ const UserRoutes = () => {
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/terms" element={<TermsConditionsPage />} />
         <Route path="/become-vendor" element={<RegisterAsVendorPage />} />
+        <Route path="/become-supplier" element={<RegisterAsSupplierPage />} />
         <Route path="/more" element={<MoreMenuPage />} />
         <Route path="/materials" element={<MaterialsCatalogPage />} />
         <Route path="/feedback" element={<FeedbackForm />} />

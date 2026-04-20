@@ -1,17 +1,23 @@
 import mongoose from 'mongoose';
-import Order from './src/models/Order.js';
+import dotenv from 'dotenv';
+import User from './src/models/User.js';
+
+dotenv.config();
 
 async function check() {
     try {
-        await mongoose.connect('mongodb://localhost:27017/ezoflife');
-        const orders = await Order.find().sort({createdAt: -1}).limit(5);
-        console.log('--- RECENT ORDERS ---');
-        orders.forEach(o => {
-            console.log(`ID: ${o._id}, DisplayID: ${o.orderId}, Status: ${o.status}`);
-        });
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('✅ DB Connected');
+        
+        const count = await User.countDocuments({ role: 'Customer' });
+        console.log('Customer Count:', count);
+        
+        const vendors = await User.find({ role: 'Vendor' }).limit(1);
+        console.log('Vendor 1 found:', !!vendors[0]);
+        
         process.exit(0);
     } catch (err) {
-        console.error(err);
+        console.error('❌ DB Diagnostic Fail:', err);
         process.exit(1);
     }
 }

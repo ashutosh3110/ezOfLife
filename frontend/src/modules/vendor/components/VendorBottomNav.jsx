@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const navItems = [
   { label: 'Home', icon: 'home', path: '/vendor/dashboard' },
-  { label: 'Sales', icon: 'payments', path: '/vendor/earnings' },
-  { label: 'Menu', icon: 'tune', path: '/vendor/services' },
-  { label: 'Bank', icon: 'account_balance', path: '/vendor/payouts' },
+  { label: 'Services', icon: 'tune', path: '/vendor/services' },
+  { label: 'Supply', icon: 'inventory_2', path: '/vendor/fulfillment' },
+  { label: 'Orders', icon: 'receipt_long', path: '/vendor/order-history' },
   { label: 'Profile', icon: 'person', path: '/vendor/profile' },
 ];
 
@@ -32,7 +32,7 @@ const VendorBottomNav = () => {
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 400, damping: 40 }}
-        className="bg-white/95 backdrop-blur-2xl px-3 py-2 rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[95%] max-w-md border border-black/5 gap-1"
+        className="bg-white/95 backdrop-blur-2xl rounded-full shadow-[0_32px_64px_rgba(0,0,0,0.12)] pointer-events-auto flex justify-around items-center w-[95%] max-w-md border border-black/5 h-16 overflow-visible"
       >
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -41,28 +41,33 @@ const VendorBottomNav = () => {
               key={item.path} 
               id={`vendor-nav-${item.label.toLowerCase()}`}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center justify-center rounded-full px-4 py-2.5 transition-colors duration-300 focus:outline-none touch-none no-underline ${
-                isActive ? 'text-on-primary' : 'text-on-surface-variant hover:bg-surface-container'
+              className={`relative flex flex-col items-center justify-center h-full transition-all duration-300 focus:outline-none touch-none no-underline flex-1 ${
+                isActive ? 'text-white' : 'text-slate-400'
               }`}
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              {isActive && (
-                <motion.div 
-                  layoutId="vendorNavBubble"
-                  className="absolute inset-0 bg-primary rounded-full shadow-lg shadow-primary/20"
-                  transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                />
-              )}
+              <AnimatePresence>
+                {isActive && (
+                  <motion.div 
+                    layoutId="vendorNavBubble"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="absolute w-14 h-14 bg-black rounded-full shadow-xl shadow-black/30 z-0"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+              </AnimatePresence>
               
-              <div className="relative z-10 flex flex-col items-center gap-0.5">
+              <div className="relative z-10 flex flex-col items-center justify-center gap-0.5 pointer-events-none">
                 <span 
-                  className="material-symbols-outlined text-[22px]"
+                  className="material-symbols-outlined text-[20px]"
                   style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
                 >
                   {item.icon}
                 </span>
                 
-                <span className="font-headline font-bold text-[9px] uppercase tracking-tighter">
+                <span className="font-headline font-black text-[7px] uppercase tracking-[0.1em]">
                   {item.label}
                 </span>
               </div>

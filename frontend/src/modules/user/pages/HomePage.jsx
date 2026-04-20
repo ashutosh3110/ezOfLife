@@ -252,7 +252,7 @@ const HomePage = () => {
           <div className="flex justify-between items-end mb-6">
             <div>
               <span className={`text-[10px] uppercase tracking-[0.25em] ${themeText} font-black`}>{isHeritage ? 'Heritage Collection' : 'Our Expertise'}</span>
-              <h2 className="text-3xl font-black tracking-tighter leading-tight italic">{isHeritage ? 'Pristine Luxury.' : 'Choose Care.'}</h2>
+              <h2 className="text-3xl font-black tracking-tighter leading-tight">{isHeritage ? 'Pristine Luxury.' : 'Choose Care.'}</h2>
             </div>
           </div>
           

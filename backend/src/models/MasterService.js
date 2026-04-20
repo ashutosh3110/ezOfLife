@@ -1,0 +1,43 @@
+import mongoose from 'mongoose';
+
+const masterServiceSchema = new mongoose.Schema({
+    name: { 
+        type: String, 
+        required: true, 
+        unique: true,
+        trim: true 
+    },
+    icon: { 
+        type: String, 
+        default: 'local_laundry_service' 
+    },
+    basePrice: { 
+        type: Number, 
+        required: true,
+        default: 0 
+    },
+    category: { 
+        type: String, 
+        default: 'General' 
+    },
+    description: {
+        type: String,
+        default: ''
+    },
+    isActive: { 
+        type: Boolean, 
+        default: true 
+    },
+    address: {
+        type: String,
+        default: ''
+    },
+    location: {
+        lat: { type: Number, default: 0 },
+        lng: { type: Number, default: 0 }
+    }
+}, { timestamps: true });
+
+const MasterService = mongoose.model('MasterService', masterServiceSchema);
+
+export default MasterService;

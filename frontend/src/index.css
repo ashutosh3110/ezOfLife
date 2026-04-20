@@ -14,7 +14,7 @@
   /* ==========================================
      2. PAGE ARCHITECTURE
      ========================================== */
-  --color-background: #89ECDA;     /* Global Teal Background */
+  --color-background: #F8FAFC;     /* Light Professional Background (Slate 50) */
   --color-surface: #ffffff;        /* Main Content Surfaces (Cards, etc) */
   --color-surface-bright: #ffffff; 
   --color-surface-dim: #f1f5f9;    /* Muted Surfaces (Inputs, Dividers) */
@@ -28,9 +28,9 @@
   /* ==========================================
      3. TYPOGRAPHY & CONTRAST
      ========================================== */
-  --color-on-background: #000000;  /* Main text on teal */
-  --color-on-surface: #000000;     /* Main text on cards */
-  --color-on-surface-variant: #000000;
+  --color-on-background: #0f172a;  /* Main text on light bg (Slate 900) */
+  --color-on-surface: #1e293b;     /* Main text on cards */
+  --color-on-surface-variant: #64748b;
   
   /* High Contrast text (for dark components) */
   --color-on-primary: #ffffff;
@@ -84,14 +84,14 @@
 }
 
 html {
-  background-color: #89ECDA; /* Matches primary background to hide any white overscroll */
+  background-color: #F8FAFC; /* Matches light background */
   scroll-behavior: smooth;
   overscroll-behavior-y: none; /* Disables the native pull-to-refresh/bounce that reveals white space */
 }
 
 @layer base {
   body {
-    background: linear-gradient(135deg, #89ECDA 0%, #a1f0e2 100%);
+    background: #F8FAFC;
     background-attachment: fixed;
     @apply text-on-surface antialiased font-body overflow-x-hidden w-full;
     min-height: 100dvh;

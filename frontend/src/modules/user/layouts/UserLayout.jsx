@@ -67,7 +67,7 @@ const UserLayout = () => {
   // Actually, let's keep it simple for now and just refactor the BottomNav to be reactive.
   
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {showHeader && <UserHeader />}
       <div className="flex-1">
         <Outlet />

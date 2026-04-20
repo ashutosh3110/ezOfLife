@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: function() {
+            if (!this) return 'approved';
             return this.role === 'Vendor' ? 'pending' : 'approved';
         }
     },
@@ -36,9 +37,22 @@ const userSchema = new mongoose.Schema({
     shopDetails: {
         name: { type: String, default: '' },
         address: { type: String, default: '' },
+        pincode: { type: String, default: '' },
+        city: { type: String, default: '' },
         gst: { type: String, default: '' },
-        services: [mongoose.Schema.Types.Mixed]
-
+        services: [{
+            id: { type: String },
+            name: { type: String },
+            adminRate: { type: Number },
+            vendorRate: { type: Number },
+            icon: { type: String },
+            status: { 
+                type: String, 
+                enum: ['pending', 'approved', 'rejected'],
+                default: 'pending'
+            },
+            rejectionReason: { type: String, default: '' }
+        }]
     },
     location: {
         lat: { type: Number, default: 0 },
@@ -49,12 +63,25 @@ const userSchema = new mongoose.Schema({
         vehicleModel: { type: String, default: '' },
         plateNumber: { type: String, default: '' }
     },
+    supplierDetails: {
+        businessName: { type: String, default: '' },
+        address: { type: String, default: '' },
+        city: { type: String, default: '' },
+        pincode: { type: String, default: '' },
+        gst: { type: String, default: '' }
+    },
     documents: [
         {
             type: { type: String },
             url: { type: String }
         }
     ],
+    bankDetails: {
+        accountHolderName: { type: String, default: '' },
+        accountNumber: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
+        bankName: { type: String, default: '' }
+    },
     isProfileComplete: {
         type: Boolean,
         default: false

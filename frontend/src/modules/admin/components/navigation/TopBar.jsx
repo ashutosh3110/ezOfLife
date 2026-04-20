@@ -13,7 +13,13 @@ export default function TopBar() {
 
     const fetchNotifications = async () => {
         try {
-            const data = await notificationApi.getNotifications('66112c3f8e4b8a2e5c8b4568', 'admin');
+            const adminRaw = localStorage.getItem('adminData') || localStorage.getItem('user') || localStorage.getItem('userData') || '{}';
+            const adminData = JSON.parse(adminRaw);
+            const adminId = adminData._id || adminData.id || adminData.user?._id || adminData.user?.id;
+
+            if (!adminId) return;
+
+            const data = await notificationApi.getNotifications(adminId, 'admin');
             if (Array.isArray(data)) {
                 setUnreadCount(data.filter(n => !n.isRead).length);
             }

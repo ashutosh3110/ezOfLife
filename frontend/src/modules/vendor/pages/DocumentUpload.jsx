@@ -6,7 +6,11 @@ import { authApi } from '../../../lib/api';
 const DocumentUpload = () => {
     const navigate = useNavigate();
     const locationState = useLocation();
-    const registrationData = locationState.state || {};
+    const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const registrationData = {
+        phone: storedUser.phone || '',
+        ...locationState.state
+    };
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -44,6 +48,7 @@ const DocumentUpload = () => {
             // Complex objects must be stringified for Multipart/FormData
             formData.append('location', JSON.stringify(registrationData.location));
             formData.append('services', JSON.stringify(registrationData.services));
+            formData.append('bankDetails', JSON.stringify(registrationData.bankDetails));
 
             // Append actual file blobs
             formData.append('idCard', files.id);

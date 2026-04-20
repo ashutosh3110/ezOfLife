@@ -1,20 +1,54 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { b2bOrderApi } from '../../../lib/api';
 
 const SupplierLogistics = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
 
-    const shipments = useMemo(() => [
-        { id: 'SZ-4421', vendor: 'Spinzyt - HSR Layout', items: '50L Detergent, 200 Tags', status: 'In Transit', driver: 'Rahul S.', eta: '14 mins' },
-        { id: 'SZ-4428', vendor: 'Spinzyt - Indiranagar', items: '100 Wooden Hangers', status: 'Picking Up', driver: 'Vikram K.', eta: '28 mins' },
-        { id: 'SZ-4430', vendor: 'FabriCare - Whitefield', items: '3 Steam Specialists', status: 'Dispatched', driver: 'Manish P.', eta: 'Reached' },
-        { id: 'SZ-4435', vendor: 'Laundry Pro - Koramangala', items: '20kg Bleach, 50 Polybags', status: 'In Transit', driver: 'Suresh M.', eta: '5 mins' }
-    ], []);
+    const [shipments, setShipments] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const filters = ['All', 'In Transit', 'Picking Up', 'Dispatched'];
+    const vendorData = JSON.parse(localStorage.getItem('vendorData') || localStorage.getItem('user') || '{}');
+    const supplierId = vendorData?._id || vendorData?.id;
+
+    const fetchOrders = async () => {
+        if (!supplierId) return;
+        try {
+            setLoading(true);
+            const data = await b2bOrderApi.getSupplierOrders(supplierId);
+            setShipments(data.map(order => ({
+                id: order.b2bOrderId,
+                _id: order._id,
+                vendor: order.vendor?.shopDetails?.name || 'Retail Partner',
+                items: order.items.map(i => `${i.quantity}x ${i.name}`).join(', '),
+                status: order.status,
+                driver: 'System Assigned',
+                eta: order.status === 'Pending' ? 'Incoming' : 'In Progress'
+            })));
+        } catch (error) {
+            console.error('Fetch Orders Error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchOrders();
+    }, [supplierId]);
+
+    const handleUpdateStatus = async (id, status) => {
+        try {
+            await b2bOrderApi.updateStatus(id, status);
+            fetchOrders();
+        } catch (error) {
+            console.error('Update Status Error:', error);
+        }
+    };
+
+    const filters = ['All', 'Pending', 'Accepted', 'Dispatched', 'Delivered'];
 
     const filteredShipments = useMemo(() => {
         return shipments.filter(ship => {
@@ -145,7 +179,30 @@ const SupplierLogistics = () => {
                                                 <p className="text-xs font-black text-on-surface italic">{ship.driver}</p>
                                             </div>
                                         </div>
-                                        <button className="h-10 px-6 bg-primary text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.25em] shadow-lg shadow-black/5 hover:scale-105 active:scale-95 transition-all">Details</button>
+                                        <div className="flex items-center gap-2">
+                                            {ship.status === 'Pending' && (
+                                                <button 
+                                                    onClick={() => handleUpdateStatus(ship._id, 'Accepted')}
+                                                    className="h-10 px-6 bg-emerald-600 text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.25em] shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
+                                                >
+                                                    Accept
+                                                </button>
+                                            )}
+                                            {ship.status === 'Accepted' && (
+                                                <button 
+                                                    onClick={() => handleUpdateStatus(ship._id, 'Dispatched')}
+                                                    className="h-10 px-6 bg-primary text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.25em] shadow-lg shadow-black/5 hover:scale-105 active:scale-95 transition-all"
+                                                >
+                                                    Dispatch
+                                                </button>
+                                            )}
+                                            <button 
+                                                onClick={() => navigate(`/supplier/order/${ship._id}`)}
+                                                className="h-10 px-6 bg-slate-100 text-slate-600 rounded-2xl text-[9px] font-black uppercase tracking-[0.25em] hover:bg-slate-200 transition-all border border-slate-200"
+                                            >
+                                                Details
+                                            </button>
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}

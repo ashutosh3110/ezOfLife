@@ -47,12 +47,37 @@ const OtpVerificationPage = () => {
         const response = await authApi.verifyOtp(phone, fullOtp);
         
         if (response.token) {
+          const user = response.user;
+          const role = (user.role || 'customer').toLowerCase();
+          const status = user.status;
+
+          // Decide the "Session Role" 
+          // If a business user is NOT approved, they act as a 'customer' for this session
+          const actingRole = ((role === 'supplier' || role === 'vendor') && status !== 'approved') ? 'customer' : role;
+
           localStorage.setItem('token', response.token);
           localStorage.setItem('user_auth_token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          localStorage.setItem('userData', JSON.stringify(response.user));
-          localStorage.setItem('userId', response.user._id || response.user.id);
-          navigate('/user/profile/create');
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('userData', JSON.stringify(user));
+          localStorage.setItem('userId', user._id || user.id);
+          localStorage.setItem('userRole', actingRole);
+
+          if (actingRole === 'vendor') {
+            if (user.isProfileComplete) {
+              navigate('/vendor/dashboard');
+            } else {
+              navigate('/vendor/register');
+            }
+          } else if (actingRole === 'supplier') {
+            navigate('/supplier/dashboard');
+          } else {
+            // CUSTOMER FLOW: SMART REDIRECT
+            if (user.displayName && user.address) {
+              navigate('/user/home');
+            } else {
+              navigate('/user/profile/create');
+            }
+          }
         } else {
           setError(response.message || 'Invalid OTP');
         }

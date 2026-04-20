@@ -79,12 +79,14 @@ const MaterialsCatalogPage = () => {
                                 variants={itemVariants}
                                 className="bg-white p-5 rounded-[2rem] border border-black/5 shadow-sm flex items-center justify-between group"
                             >
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                        <span className="material-symbols-outlined text-2xl">{item.icon || 'package'}</span>
+                                <div className="flex items-center gap-5 min-w-0">
+                                    <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary group-hover:scale-110 transition-transform flex-shrink-0 overflow-hidden">
+                                        <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                            {item.icon || 'package'}
+                                        </span>
                                     </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-on-surface leading-none mb-1">{item.name}</h3>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="text-sm font-black text-on-surface leading-tight mb-1 truncate">{item.name}</h3>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[9px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/5 rounded-full">{item.category}</span>
                                             <span className="text-[9px] font-bold text-on-surface-variant opacity-40 uppercase tracking-widest">{item.stock}</span>
