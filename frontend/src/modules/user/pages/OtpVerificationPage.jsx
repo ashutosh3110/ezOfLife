@@ -44,10 +44,13 @@ const OtpVerificationPage = () => {
     }
   };
 
+  const [isVerifying, setIsVerifying] = useState(false);
+
   const handleVerify = async (providedOtp) => {
     const otpToVerify = providedOtp || otp;
     if (otpToVerify.every(digit => digit !== '')) {
       setError('');
+      setIsVerifying(true);
       try {
         const fullOtp = otpToVerify.join('');
         const response = await authApi.verifyOtp(phone, fullOtp);
@@ -82,9 +85,13 @@ const OtpVerificationPage = () => {
           }
         } else {
           setError(response.message || 'Invalid OTP');
+          setIsVerifying(false);
+          setOtp(['', '', '', '', '', '']);
+          inputRefs.current[0].focus();
         }
       } catch (err) {
         setError('Verification failed. Try again.');
+        setIsVerifying(false);
       }
     }
   };
@@ -120,16 +127,26 @@ const OtpVerificationPage = () => {
       >
         <div className="text-center mb-10">
           <div className="w-20 h-20 bg-primary-container/30 rounded-3xl flex items-center justify-center text-primary mx-auto mb-6 shadow-inner">
-            <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
+            {isVerifying ? (
+              <motion.span 
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="material-symbols-outlined text-4xl"
+              >
+                sync
+              </motion.span>
+            ) : (
+              <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>mark_email_read</span>
+            )}
           </div>
           <h1 className="text-3xl font-black tracking-tighter text-on-surface mb-3 leading-tight">Verification Code</h1>
           <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest leading-none">We've sent a 6-digit code to</p>
           <p className="text-sm font-black text-primary mt-2 tracking-tight">+91 {phone}</p>
-          {error && <p className="text-[10px] text-error font-bold mt-3 animate-pulse">{error}</p>}
+          {error && <p className="text-[10px] text-error font-black mt-3 animate-pulse uppercase tracking-widest">{error}</p>}
         </div>
 
         {/* OTP Inputs */}
-        <div className="flex justify-center gap-2 md:gap-3 mb-10">
+        <div className={`flex justify-center gap-2 md:gap-3 mb-10 transition-opacity ${isVerifying ? 'opacity-50 pointer-events-none' : ''}`}>
           {otp.map((digit, index) => (
             <input
               key={index}
@@ -146,7 +163,7 @@ const OtpVerificationPage = () => {
         </div>
 
         {/* Resend Logic */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-2">
           {timer > 0 ? (
             <p className="text-xs font-bold text-on-surface-variant opacity-60 uppercase tracking-widest">
               Resend code in <span className="text-primary font-black ml-1">{timer}s</span>
@@ -162,24 +179,21 @@ const OtpVerificationPage = () => {
           )}
         </div>
 
-        <motion.button 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleVerify}
-          disabled={!isOtpComplete}
-          className={`w-full py-5.5 rounded-2xl font-headline font-black text-xs uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${
-            !isOtpComplete 
-            ? 'bg-outline-variant/20 text-on-surface-variant/40 shadow-none cursor-not-allowed' 
-            : 'bg-primary-gradient text-on-primary shadow-primary/30'
-          }`}
-        >
-          Verify & Continue
-          <span className="material-symbols-outlined text-lg">arrow_forward</span>
-        </motion.button>
+        <div className="h-10 flex items-center justify-center">
+          {isVerifying && (
+             <div className="flex items-center gap-2">
+               <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+               <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+               <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+               <span className="text-[10px] font-black uppercase tracking-widest text-primary ml-2">Verifying...</span>
+             </div>
+          )}
+        </div>
 
         <button 
           onClick={() => navigate('/user/auth')}
-          className="w-full mt-6 text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+          disabled={isVerifying}
+          className="w-full mt-4 text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity disabled:opacity-10"
         >
           Change Phone Number
         </button>
