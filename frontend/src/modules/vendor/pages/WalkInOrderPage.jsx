@@ -13,13 +13,16 @@ const WalkInOrderPage = () => {
     const [liveServices, setLiveServices] = useState([]);
     const [showInvoice, setShowInvoice] = useState(false);
     const [createdOrder, setCreatedOrder] = useState(null);
+    const [deliveryTime, setDeliveryTime] = useState('Tomorrow, 6:00 PM');
+    const [quantity, setQuantity] = useState(1);
 
     const vendorData = JSON.parse(localStorage.getItem('vendorData') || '{}');
     const vendorId = vendorData?._id || vendorData?.id;
 
     const fetchServices = async () => {
         try {
-            const data = await serviceApi.getAll();
+            // Fetch only vendor's approved services
+            const data = await serviceApi.getAll({ vendorId });
             setLiveServices(data);
         } catch (error) {
             console.error('Fetch Services Error:', error);
@@ -46,15 +49,22 @@ const WalkInOrderPage = () => {
 
     const addItem = () => {
         if (!selectedService) return;
-        setItems([...items, { ...selectedService, id: Date.now(), tag: `T-${Math.floor(1000 + Math.random() * 9000)}` }]);
-        toast.success(`${selectedService.title} added!`);
+        const newItem = { 
+            ...selectedService, 
+            id: Date.now(), 
+            quantity: quantity,
+            tag: `T-${Math.floor(1000 + Math.random() * 9000)}` 
+        };
+        setItems([...items, newItem]);
+        toast.success(`${quantity}x ${selectedService.title} added!`);
+        setQuantity(1); // Reset quantity
     };
 
     const removeItem = (id) => {
         setItems(items.filter(item => item.id !== id));
     };
 
-    const total = items.reduce((sum, item) => sum + item.price, 0);
+    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     const handleCollectAndPrint = async () => {
         if (!customerPhone || items.length === 0) return;
@@ -64,19 +74,26 @@ const WalkInOrderPage = () => {
             const orderData = {
                 customerPhone,
                 vendorId,
+                orderType: 'Walk-In', // Logistics Bypass
+                deliveryTime,
                 items: items.map(i => ({
                     serviceId: i.serviceId,
                     name: i.title,
                     price: i.price,
-                    quantity: 1
+                    quantity: i.quantity
                 })),
-                totalAmount: total
+                totalAmount: total,
+                status: 'In Progress' // Directly to In Progress
             };
 
             const response = await orderApi.createWalkInOrder(orderData);
             setCreatedOrder(response);
             setShowInvoice(true);
-            toast.success('Order Generated Successfully!');
+            
+            // Logic for customer notification (Mock)
+            console.log(`Sending SMS to ${customerPhone}: Order confirmed! Download app: https://spinzyt.com/app`);
+            
+            toast.success('Walk-In Order Created!');
         } catch (err) {
             console.error('Walk-In Creation Failure:', err);
             toast.error('Failed to generate order');
@@ -136,19 +153,61 @@ const WalkInOrderPage = () => {
                                 <span className="text-[8px] font-bold opacity-60 mt-1">₹{s.price}</span>
                             </motion.button>
                         )) : (
-                            <div className="w-full py-6 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest italic animate-pulse">Loading Services...</div>
+                            <div className="w-full py-6 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest animate-pulse">Loading Services...</div>
                         )}
                     </div>
                     {selectedService && (
-                        <motion.button
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            onClick={addItem}
-                            className="w-full py-4.5 bg-white text-[#3D5AFE] font-black text-[10px] uppercase tracking-widest rounded-2xl border-2 border-[#3D5AFE]/10 hover:bg-[#3D5AFE]/5 transition-all flex items-center justify-center gap-2 shadow-sm"
+                        <motion.div 
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-6"
                         >
-                            <span className="material-symbols-outlined text-sm">add_circle</span>
-                            Add {selectedService.title} to Order
-                        </motion.button>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Quantity</p>
+                                    <p className="text-sm font-black text-slate-900 mt-1">{selectedService.title}</p>
+                                </div>
+                                <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl">
+                                    <button 
+                                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                        className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-900 font-bold"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="text-lg font-black w-8 text-center">{quantity}</span>
+                                    <button 
+                                        onClick={() => setQuantity(quantity + 1)}
+                                        className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-900 font-bold"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Delivery Commitment</p>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {['Today, 8 PM', 'Tomorrow, 6 PM', 'In 2 Days', 'Custom Time'].map(time => (
+                                        <button 
+                                            key={time}
+                                            onClick={() => setDeliveryTime(time)}
+                                            className={`py-3 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${deliveryTime === time ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100'}`}
+                                        >
+                                            {time}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                onClick={addItem}
+                                className="w-full py-5 bg-primary text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
+                            >
+                                <span className="material-symbols-outlined text-sm">add_circle</span>
+                                Add {quantity}x {selectedService.title} to Order
+                            </motion.button>
+                        </motion.div>
                     )}
                 </section>
 
@@ -170,11 +229,11 @@ const WalkInOrderPage = () => {
                                             #{idx + 1}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-slate-800 leading-none mb-1">{item.title}</p>
+                                            <p className="text-sm font-black text-slate-800 leading-none mb-1">{item.quantity}x {item.title}</p>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[9px] font-bold text-[#3D5AFE] uppercase tracking-widest">Tag: {item.tag}</span>
                                                 <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Price: ₹{item.price}</span>
+                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">₹{item.price} ea.</span>
                                             </div>
                                         </div>
                                     </div>

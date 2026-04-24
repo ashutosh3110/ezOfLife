@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import SupplierDashboard from '../pages/SupplierDashboard';
-import SupplierRateCard from '../pages/SupplierRateCard';
+import SupplierSupplies from '../pages/SupplierSupplies';
 import SupplierFulfillmentPage from '../pages/SupplierFulfillmentPage';
 import UserLayout from '../../user/layouts/UserLayout';
 import SupplierLogistics from '../pages/SupplierLogistics';
@@ -14,7 +14,7 @@ const SupplierRoutes = () => {
       <Route element={<UserLayout />}>
         {/* Main Hub */}
         <Route path="/dashboard" element={<SupplierDashboard />} />
-        <Route path="/rates" element={<SupplierRateCard />} />
+        <Route path="/supplies" element={<SupplierSupplies />} />
         <Route path="/fulfillment/:id" element={<SupplierFulfillmentPage />} />
         <Route path="/logistics" element={<SupplierLogistics />} />
         <Route path="/wallet" element={<SupplierWallet />} />

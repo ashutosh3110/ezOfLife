@@ -532,10 +532,7 @@ const Dashboard = () => {
                     <div className="flex flex-col gap-5">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-slate-900 tracking-tight">Order Hub</h3>
-                            <div className="flex items-center gap-1.5 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-100">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-                                <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Live Broadcast</span>
-                            </div>
+
                         </div>
 
                         <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shadow-inner w-full">
@@ -809,25 +806,7 @@ const Dashboard = () => {
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
-                        {[
-                            { label: 'Walk-In', icon: 'add_shopping_cart', color: 'primary', path: '/vendor/walk-in' },
-                            { label: 'Promos', icon: 'campaign', color: 'tertiary', path: '/vendor/promotions' },
-                            { label: 'Jobs', icon: 'work', color: 'amber', path: '/vendor/jobs' }
-                        ].map((action, i) => (
-                            <motion.button 
-                                key={i}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => navigate(action.path)}
-                                className="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-sm flex flex-col items-center gap-2 hover:border-primary/20 transition-all"
-                            >
-                                <div className={`w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-900 shadow-inner`}>
-                                    <span className="material-symbols-outlined text-xl">{action.icon}</span>
-                                </div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{action.label}</span>
-                            </motion.button>
-                        ))}
-                    </div>
+
                 </section>
             </main>
         </motion.div>

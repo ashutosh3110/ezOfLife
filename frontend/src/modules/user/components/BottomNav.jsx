@@ -14,14 +14,14 @@ const BottomNav = () => {
       case 'vendor':
         return [
           { label: 'Dashboard', icon: 'dashboard', path: '/vendor/dashboard' },
-          { label: 'Workshop', icon: 'local_laundry_service', path: '/vendor/services' },
+          { label: 'My Services', icon: 'local_laundry_service', path: '/vendor/services' },
           { label: 'Profile', icon: 'person', path: '/vendor/profile' },
           { label: 'More', icon: 'menu', path: '/user/more' }
         ];
       case 'supplier':
         return [
-          { label: 'Dashboard', icon: 'dashboard', path: '/supplier/dashboard' },
-          { label: 'Logistics', icon: 'inventory_2', path: '/user/materials' },
+          { label: 'Home', icon: 'home', path: '/supplier/dashboard' },
+          { label: 'Supplies', icon: 'inventory_2', path: '/supplier/supplies' },
           { label: 'Profile', icon: 'person', path: '/user/profile' },
           { label: 'More', icon: 'menu', path: '/user/more' }
         ];
@@ -35,7 +35,7 @@ const BottomNav = () => {
       default: // customer
         return [
           { label: 'Home', icon: 'home', path: '/user/home' },
-          { label: 'Orders', icon: 'local_laundry_service', path: '/user/orders' },
+          { label: 'My Orders', icon: 'local_laundry_service', path: '/user/orders' },
           { label: 'Profile', icon: 'person', path: '/user/profile' },
           { label: 'More', icon: 'menu', path: '/user/more' }
         ];

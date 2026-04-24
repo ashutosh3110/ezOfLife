@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navItems = [
   { label: 'Home', icon: 'home', path: '/vendor/dashboard' },
   { label: 'Services', icon: 'tune', path: '/vendor/services' },
-  { label: 'Supply', icon: 'inventory_2', path: '/vendor/fulfillment' },
-  { label: 'Orders', icon: 'receipt_long', path: '/vendor/order-history' },
   { label: 'Profile', icon: 'person', path: '/vendor/profile' },
+  { label: 'Orders', icon: 'receipt_long', path: '/vendor/order-history' },
+  { label: 'More', icon: 'menu', path: '/user/more' },
 ];
 
 const VendorBottomNav = () => {

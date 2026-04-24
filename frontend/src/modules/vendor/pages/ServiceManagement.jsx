@@ -76,6 +76,7 @@ const ServiceManagement = () => {
     };
 
     useEffect(() => {
+        document.title = 'My Services | Spinzyt';
         if (vendorId) {
             fetchConfig();
         } else {
@@ -188,19 +189,68 @@ const ServiceManagement = () => {
             className="bg-background text-on-background min-h-screen pb-32 font-body"
         >
 
-            <main className="max-w-xl mx-auto px-6 pt-8 space-y-8">
-                {/* Header Section */}
-                <section className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-4">
-                    <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined text-[24px]">trending_up</span>
+            <main className="max-w-xl mx-auto px-6 pt-10 space-y-12">
+                {/* PAGE HEADER */}
+                <header className="space-y-1">
+                    <h1 className="text-4xl font-black tracking-tighter text-slate-950 uppercase leading-none">My Services.</h1>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] ml-1">Shop Command Center</p>
+                </header>
+                {/* 1. OPERATIONAL HUB (WALK-IN, SUPPLIES, LABOR) */}
+                <section className="space-y-6">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operational Hub</h3>
+                        <span className="material-symbols-outlined text-slate-300 text-sm">hub</span>
                     </div>
-                    <div className="space-y-1">
-                        <h2 className="text-lg font-bold text-on-surface tracking-tight">Manage Inventory</h2>
-                        <p className="text-xs text-on-surface-variant font-medium leading-relaxed font-body">Set service active/inactive status and update current pricing.</p>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {/* WALK-IN ORDER HUB */}
+                        <motion.div 
+                            whileHover={{ scale: 1.01 }}
+                            onClick={() => navigate('/vendor/walk-in')}
+                            className="bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden group cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-[80px] -mr-20 -mt-20 group-hover:bg-primary/20 transition-all duration-700"></div>
+                            <div className="relative z-10 flex items-center justify-between">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Manual Entry Hub</p>
+                                    </div>
+                                    <h2 className="text-2xl font-black text-white tracking-tighter uppercase">Walk-In Order Hub</h2>
+                                    <p className="text-[10px] text-slate-400 font-bold leading-relaxed max-w-[200px]">Create orders for customers at your shop. No pickup rider needed.</p>
+                                </div>
+                                <div className="w-16 h-16 bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center text-white">
+                                    <span className="material-symbols-outlined text-3xl">add_shopping_cart</span>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/vendor/material-request')}
+                                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-primary/20 transition-all group"
+                            >
+                                <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                    <span className="material-symbols-outlined">inventory_2</span>
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-600">Submit Supplies</span>
+                            </motion.button>
+                            <motion.button 
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate('/vendor/labor-request')}
+                                className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-indigo-100 transition-all group"
+                            >
+                                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                                    <span className="material-symbols-outlined">engineering</span>
+                                </div>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-600">Request Labor</span>
+                            </motion.button>
+                        </div>
                     </div>
                 </section>
 
-                {/* Service List */}
+                {/* 2. SERVICE INVENTORY & RATE CARD */}
                 <section className="space-y-4">
                     <div className="flex items-center justify-between px-2">
                         <h3 className="text-[11px] font-bold text-on-background uppercase tracking-widest">Active Offerings</h3>
@@ -212,96 +262,102 @@ const ServiceManagement = () => {
                             <span className="text-[10px] font-black uppercase tracking-wider">Add New</span>
                         </button>
                     </div>
-                    
-                    <div className="space-y-3">
+                                      <div className="space-y-4">
                         {services.map((service, idx) => {
                             const aggregatorFee = Math.round(service.basePrice * 0.15);
                             const netEarnings = service.basePrice - aggregatorFee;
                             const isPending = service.approvalStatus === 'Pending';
 
                             return (
-                                <div key={service.id || service._id} className={`bg-white p-6 rounded-[2.5rem] border ${isPending ? 'border-amber-100 bg-amber-50/10' : 'border-slate-100'} shadow-sm flex flex-col gap-4 transition-all group overflow-hidden relative`}>
-                                    {isPending && (
-                                        <div className="absolute top-0 left-0 w-full px-4 py-1 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest text-center">
-                                            Waiting for Admin Approval
-                                        </div>
-                                    )}
-                                    <div className={`flex items-center justify-between ${isPending ? 'pt-4' : ''}`}>
-                                        <div className="flex items-center gap-4 min-w-0">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active && !isPending ? 'bg-primary/5 text-primary' : 'bg-surface-container text-outline-variant/30'}`}>
-                                                <span className="material-symbols-outlined text-[20px]">{service.icon}</span>
+                                <div key={service.id || service._id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 relative overflow-hidden group">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${service.active && !isPending ? 'bg-primary/10 text-primary' : 'bg-slate-50 text-slate-300'}`}>
+                                                <span className="material-symbols-outlined text-xl">{service.icon || 'local_laundry_service'}</span>
                                             </div>
-                                            <div className="min-w-0">
-                                                <h4 className="text-sm font-bold text-on-surface tracking-tight truncate">{service.name}</h4>
-                                                <p className="text-[9px] text-on-surface-variant font-bold uppercase tracking-widest leading-none mt-1">Unit: {service.unit}</p>
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-900 tracking-tight">{service.name}</h4>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${service.active ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{service.active ? 'Accepting Orders' : 'Offline'}</p>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`text-[8px] font-black uppercase tracking-widest ${isPending ? 'text-amber-500' : (service.active ? 'text-emerald-600' : 'text-slate-300')}`}>
-                                                {isPending ? 'Pending' : (service.active ? 'Active' : 'Inactive')}
-                                            </span>
-                                            <div 
-                                                onClick={() => !isPending && toggleService(idx)}
-                                                className={`w-12 h-6 rounded-full relative transition-all duration-300 ${isPending ? 'bg-slate-100 opacity-50 cursor-not-allowed' : (service.active ? 'bg-emerald-500 shadow-lg shadow-emerald-200 cursor-pointer' : 'bg-slate-200 shadow-inner cursor-pointer')}`}
-                                            >
-                                                <motion.div 
-                                                    animate={{ x: (service.active && !isPending) ? 26 : 4 }}
-                                                    className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm"
-                                                />
-                                            </div>
+                                        <div 
+                                            onClick={() => !isPending && toggleService(idx)}
+                                            className={`w-12 h-6 rounded-full relative transition-all duration-300 shadow-inner ${isPending ? 'bg-slate-100 cursor-not-allowed' : (service.active ? 'bg-emerald-500' : 'bg-slate-200 cursor-pointer')}`}
+                                        >
+                                            <motion.div 
+                                                animate={{ x: (service.active && !isPending) ? 26 : 4 }}
+                                                className="absolute top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                                            />
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                                    <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1 italic opacity-60">Base Rate (₹)</label>
-                                            <div className="relative group/price">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400 group-focus-within/price:text-primary transition-colors">₹</span>
+                                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Live Rate (₹)</p>
+                                            <div className="relative">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">₹</span>
                                                 <input 
                                                     type="number"
                                                     value={service.basePrice || 0}
                                                     onChange={(e) => updatePrice(idx, e.target.value)}
-                                                    className="w-full pl-8 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] text-sm font-black text-slate-900 focus:bg-white focus:border-primary/20 transition-all outline-none shadow-sm"
+                                                    className="w-full pl-8 pr-4 py-3 bg-slate-50 rounded-2xl text-[13px] font-black text-slate-900 focus:bg-white border-2 border-transparent focus:border-primary/20 transition-all outline-none"
                                                 />
                                             </div>
                                         </div>
-                                        <div className="bg-slate-900 rounded-[1.5rem] p-4 flex flex-col justify-center border border-white/10 shadow-xl">
-                                            <div className="flex justify-between items-center mb-1.5 opacity-60">
-                                                <span className="text-[7px] font-black text-slate-400 uppercase tracking-[0.2em]">Platform Fee</span>
-                                                <span className="text-[8px] font-black text-rose-400">-₹{aggregatorFee}</span>
+                                        <div className="bg-slate-900 rounded-2xl p-4 flex flex-col justify-center shadow-lg">
+                                            <div className="flex justify-between items-center opacity-40">
+                                                <span className="text-[7px] font-black text-white uppercase tracking-widest">Net Yield</span>
+                                                <span className="text-[7px] font-black text-emerald-400">85%</span>
                                             </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-[8px] font-black text-white uppercase tracking-[0.25em]">Net Yield</span>
-                                                <span className="text-md font-black text-emerald-400 tabular-nums">₹{netEarnings}</span>
-                                            </div>
+                                            <p className="text-lg font-black text-emerald-400 tracking-tighter leading-none mt-1">₹{netEarnings}</p>
                                         </div>
-                                    </div>
-                                    
-                                    {/* Profit Margin Indicator (Phase 2 Requirement) */}
-                                    <div className="mt-2 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                        <motion.div 
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${Math.min((netEarnings / service.basePrice) * 100, 100)}%` }}
-                                            className="h-full bg-emerald-500 opacity-60"
-                                        />
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
-
-                </section>
-
-                <div className="pt-8">
+                    
                     <button 
                         onClick={handleUpdate}
-                        className="w-full py-5 rounded-[2rem] vendor-gradient text-white font-bold text-lg shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-3"
+                        className="w-full py-5 rounded-3xl bg-slate-900 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-primary transition-all flex items-center justify-center gap-3"
                     >
-                        <span className="material-symbols-outlined text-[20px]">check</span>
-                        Update Services
+                        <span className="material-symbols-outlined text-lg">sync_saved_locally</span>
+                        Update Rate Card
                     </button>
-                    <p className="mt-6 text-center text-[10px] font-bold text-on-background uppercase tracking-widest">Last updated: Today, 10:45 AM</p>
-                </div>
+                </section>
+
+                {/* 3. PROMOTION MANAGER */}
+                <section className="space-y-6">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Marketing & Offers</h3>
+                        <span className="material-symbols-outlined text-slate-300 text-sm">campaign</span>
+                    </div>
+
+                    <motion.div 
+                        whileHover={{ scale: 1.01 }}
+                        onClick={() => navigate('/vendor/promotions')}
+                        className="bg-slate-950 rounded-[2.5rem] p-8 shadow-2xl shadow-slate-950/20 relative overflow-hidden cursor-pointer border border-white/5"
+                    >
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/10 rounded-full blur-[80px] -mr-20 -mt-20"></div>
+                        <div className="relative z-10 flex items-center gap-6">
+                            <div className="w-16 h-16 bg-white/5 rounded-[2rem] flex items-center justify-center text-white border border-white/10 backdrop-blur-md">
+                                <span className="material-symbols-outlined text-3xl">celebration</span>
+                            </div>
+                            <div className="space-y-1">
+                                <h2 className="text-xl font-black text-white tracking-tight uppercase">Promotion Manager</h2>
+                                <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Active Offers • Manage Now</p>
+                            </div>
+                            <div className="ml-auto">
+                                <span className="material-symbols-outlined text-white/40">chevron_right</span>
+                            </div>
+                        </div>
+                    </motion.div>
+                </section>
+
+                <p className="text-center text-[9px] font-black text-slate-300 uppercase tracking-[0.4em] pt-10">Spinzyt Partner Hub v2.0</p>
             </main>
         </motion.div>
     );

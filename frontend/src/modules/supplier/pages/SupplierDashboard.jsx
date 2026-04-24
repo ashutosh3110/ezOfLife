@@ -76,6 +76,113 @@ const SupplierDashboard = () => {
             </header>
 
             <main className="px-6 space-y-8 flex-1 max-w-xl mx-auto">
+                {/* 1. WEEKLY CONSOLIDATION QUEUE (PRIMARY SECTION) */}
+                <section className="space-y-4">
+                    <div className="bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-[80px] -mr-20 -mt-20 group-hover:bg-indigo-500/20 transition-all duration-700"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="space-y-1">
+                                    <h2 className="text-xl font-black text-white tracking-tight italic">Weekly Consolidation Queue</h2>
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Current Cycle Aggregation</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
+                                    <span className="material-symbols-outlined text-white text-xl">rebase_edit</span>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-y-8 gap-x-6">
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Detergent</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-2xl font-black text-white tracking-tighter">450</span>
+                                        <span className="text-[10px] font-black text-indigo-400 uppercase">KG</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Laundry Bags</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-2xl font-black text-white tracking-tighter">1,200</span>
+                                        <span className="text-[10px] font-black text-emerald-400 uppercase">Units</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Total Softener</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-2xl font-black text-white tracking-tighter">90</span>
+                                        <span className="text-[10px] font-black text-rose-400 uppercase">Ltr</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Packaging Rolls</p>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-2xl font-black text-white tracking-tighter">35</span>
+                                        <span className="text-[10px] font-black text-amber-400 uppercase">Qty</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button className="w-full mt-10 py-4 bg-white text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-indigo-500 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2">
+                                Prepare Consolidation
+                                <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                {/* 1.5 FULFILLMENT TIMELINE (VISUAL TRACKER) */}
+                <section className="space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fulfillment Timeline</h3>
+                        <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[12px] animate-pulse">alarm</span>
+                            Deadlines Active
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        <div className="bg-indigo-50 p-5 rounded-[2.5rem] border border-indigo-100 flex items-center justify-between group overflow-hidden relative">
+                            <div className="absolute -right-2 -bottom-2 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl"></div>
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-500 shadow-sm">
+                                    <span className="material-symbols-outlined text-xl">event_upcoming</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 tracking-tight">Weekend Consolidation</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Bulk batching cycle</p>
+                                </div>
+                            </div>
+                            <div className="text-right relative z-10">
+                                <p className="text-xl font-black text-indigo-600 tracking-tighter">In 2 Days</p>
+                                <div className="h-1 w-12 bg-indigo-200 rounded-full mt-1 ml-auto overflow-hidden">
+                                    <div className="h-full w-2/3 bg-indigo-500 rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-rose-50 p-5 rounded-[2.5rem] border border-rose-100 flex items-center justify-between group relative overflow-hidden">
+                            <div className="absolute -right-2 -bottom-2 w-20 h-20 bg-rose-500/5 rounded-full blur-2xl"></div>
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-rose-500 shadow-sm">
+                                    <span className="material-symbols-outlined text-xl">gavel</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 tracking-tight">Rate Submission</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Deadline approaching</p>
+                                </div>
+                            </div>
+                            <div className="text-right relative z-10">
+                                <p className="text-sm font-black text-rose-600 tracking-tight">Today 6:00 PM</p>
+                                <p className="text-[8px] font-black text-rose-400 uppercase tracking-widest mt-1 italic animate-pulse text-right">Action Required</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section className="grid grid-cols-2 gap-4">
                     <div className="bg-white p-5 rounded-3xl border border-black/5 shadow-sm transition-all hover:shadow-md">
                         <p className="text-[10px] font-bold text-on-surface/40 uppercase tracking-widest mb-1">Active Orders</p>
@@ -89,6 +196,85 @@ const SupplierDashboard = () => {
                         <p className="text-[10px] font-bold uppercase tracking-widest mb-1 opacity-80">Local Area</p>
                         <h2 className="text-3xl font-black tracking-tighter leading-none">{user.supplierDetails?.pincode || '452001'}</h2>
                         <p className="text-[9px] font-black uppercase mt-2.5 opacity-60">{user.supplierDetails?.city || 'Indore'}</p>
+                    </div>
+                </section>
+
+                {/* 2. QUICK ACTIONS COMMAND CENTER */}
+                <section className="space-y-4">
+                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Quick Actions</h3>
+                    <div className="grid grid-cols-3 gap-3">
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/supplier/rates')}
+                            className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-primary/20 transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-primary/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">
+                                <span className="material-symbols-outlined">currency_exchange</span>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Update Rates</span>
+                        </motion.button>
+
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-amber-100 transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                                <span className="material-symbols-outlined">local_shipping</span>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Dispatch</span>
+                        </motion.button>
+
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3 hover:border-emerald-100 transition-all group"
+                        >
+                            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                                <span className="material-symbols-outlined">verified_user</span>
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-600">Deliver</span>
+                        </motion.button>
+                    </div>
+                </section>
+
+                {/* 3. HISTORICAL SHIPMENTS LOG */}
+                <section className="space-y-6">
+                    <div className="flex items-center justify-between px-1">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Historical Shipments</h3>
+                        <span className="material-symbols-outlined text-slate-300 text-sm">history</span>
+                    </div>
+
+                    <div className="space-y-3">
+                        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-indigo-100 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 shadow-inner">
+                                    <span className="material-symbols-outlined text-xl">package_2</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 tracking-tight">Shipment #1201</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">20 Apr • Bulk Supply</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-black text-slate-900 tracking-tight">620 KG</p>
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full">Settled</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between hover:border-amber-100 transition-all">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-500 shadow-inner">
+                                    <span className="material-symbols-outlined text-xl">local_shipping</span>
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-slate-900 tracking-tight">Shipment #1202</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">15 Apr • Regional Hub</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-black text-slate-900 tracking-tight">480 KG</p>
+                                <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded-full">Pending</span>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

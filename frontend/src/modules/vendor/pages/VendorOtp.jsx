@@ -61,8 +61,16 @@ const VendorOtp = () => {
                         if (!user.isProfileComplete) {
                             return navigate('/vendor/register', { state: { phone } });
                         }
+                        return navigate('/vendor/dashboard');
+                    }
+
+                    if (user.role === 'Supplier') {
+                        localStorage.setItem('supplierToken', response.token);
+                        localStorage.setItem('supplierData', JSON.stringify(user));
+                        return navigate('/supplier/dashboard');
                     }
                     
+                    // Default fallback
                     navigate('/vendor/dashboard');
                 } else {
                     setError(response.message || 'Invalid OTP');
