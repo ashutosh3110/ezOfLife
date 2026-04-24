@@ -66,12 +66,20 @@ const OrderConfirmationPage = () => {
         <motion.header 
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
-          className="mb-12 ml-2"
+          className="mb-12 flex items-center gap-6"
         >
-          <p className="font-label text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-80">Final Review</p>
-          <h2 className="font-headline text-4xl md:text-5xl font-black text-on-background tracking-tighter leading-none">
-            Review Your<br/><span className="text-primary opacity-90">Fresh Start.</span>
-          </h2>
+          <button 
+            onClick={() => window.history.back()}
+            className="w-12 h-12 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-black shadow-sm transition-all active:scale-90"
+          >
+            <span className="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div>
+            <p className="font-label text-[10px] uppercase tracking-[0.3em] text-primary font-black mb-2 opacity-80">Final Review</p>
+            <h2 className="font-headline text-4xl md:text-5xl font-black text-on-background tracking-tighter leading-none">
+              Review Your<br/><span className="text-primary opacity-90">Fresh Start.</span>
+            </h2>
+          </div>
         </motion.header>
 
         {/* Content Grid */}
@@ -205,27 +213,7 @@ const OrderConfirmationPage = () => {
               </div>
             </motion.div>
 
-            {/* Stylized Map Minimal */}
-            <motion.div 
-              variants={itemVariants}
-              className="mt-8 rounded-[2.5rem] overflow-hidden h-44 relative group cursor-pointer shadow-sm"
-            >
-              <img 
-                alt="map location" 
-                className="w-full h-full object-cover grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-[1s]" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQoYdAG89glCjaeEkbF_8hGfq8sA5Fi7L2_2zT8cu5EynPvi87YleqaYdJiXJOjbvovXHPpfF-CTwrs1CaLOuKWIE4VFTZKhxw8S11oRFYgYncZRhHSOt3EDq2VTcN_cxix5F-m2o90__iq6-D-4tV5BOg1WEsA14U2vrcC0BC-3sG94ruxE2rqMuP98nt1v1aojpKbVsU6xLOzqZWhZiQOa-wwxWt7YX_lLyzsONSHpybM2f-TKAHdUEGyh86RcmzIm4AWLVRFMg" 
-              />
-              <div className="absolute inset-0 bg-primary/5 mix-blend-multiply group-hover:bg-transparent transition-all"></div>
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <motion.div 
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="bg-white p-3.5 rounded-full shadow-2xl"
-                >
-                  <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
-                </motion.div>
-              </div>
-            </motion.div>
+            {/* Map Removed per user request */}
           </aside>
         </motion.div>
       </main>

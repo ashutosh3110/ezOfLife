@@ -212,57 +212,60 @@ const CartPage = () => {
   const [selectedDropAddress, setSelectedDropAddress] = useState(null);
   const [isSameAddress, setIsSameAddress] = useState(true);
   const [activeAddressType, setActiveAddressType] = useState('pickup');
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const syncAddresses = async () => {
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       const userId = userData._id || userData.id;
       
-      // Get detected location from localStorage (from HomePage)
+      // 1. Get address from localStorage (Set by UserHeader/Home)
       const detectedAddr = localStorage.getItem('detected_address');
       const detectedCoords = JSON.parse(localStorage.getItem('detected_coords') || 'null');
 
-      if (!userId) {
-          // If guest/not logged in but has detected location
-          if (detectedAddr) {
-              const addrObj = { id: 'detected', type: 'Current', address: detectedAddr, location: detectedCoords || defaultCenter };
-              setAddresses([addrObj]);
-              setSelectedPickupAddress(addrObj);
-              setSelectedDropAddress(addrObj);
-          }
-          return;
+      let initialAddresses = [];
+      let defaultAddress = null;
+
+      if (detectedAddr) {
+          defaultAddress = { 
+            id: 'current_set', 
+            type: 'Current Selection', 
+            address: detectedAddr, 
+            location: detectedCoords || defaultCenter 
+          };
+          initialAddresses.push(defaultAddress);
       }
 
-      try {
-        const profile = await authApi.getProfile(userId);
-        let currentAddresses = [];
-
-        if (profile.address) {
-          const mainAddr = { 
-            id: 'main', 
-            type: 'Home', 
-            address: profile.address, 
-            location: profile.location || defaultCenter 
-          };
-          currentAddresses.push(mainAddr);
+      // 2. Fetch profile addresses if logged in
+      if (userId) {
+        try {
+          const profile = await authApi.getProfile(userId);
+          if (profile.address && profile.address !== detectedAddr) {
+            initialAddresses.push({ 
+              id: 'profile', 
+              type: 'Profile Home', 
+              address: profile.address, 
+              location: profile.location || defaultCenter 
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching profile address:', error);
         }
+      }
 
-        // If user has NO profile address but HAS a detected one, use detected
-        if (currentAddresses.length === 0 && detectedAddr) {
-            const addrObj = { id: 'detected', type: 'Current', address: detectedAddr, location: detectedCoords || defaultCenter };
-            currentAddresses.push(addrObj);
-        }
-
-        setAddresses(currentAddresses);
-        if (currentAddresses.length > 0) {
-            setSelectedPickupAddress(currentAddresses[0]);
-            setSelectedDropAddress(currentAddresses[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching profile for address:', error);
+      setAddresses(initialAddresses);
+      
+      // 3. AUTOMATICALLY set the detected address as pickup
+      if (defaultAddress) {
+          setSelectedPickupAddress(defaultAddress);
+          setSelectedDropAddress(defaultAddress);
+      } else if (initialAddresses.length > 0) {
+          setSelectedPickupAddress(initialAddresses[0]);
+          setSelectedDropAddress(initialAddresses[0]);
       }
     };
-    fetchProfile();
+
+    syncAddresses();
   }, []);
 
   const confirmMapAddress = async () => {
@@ -459,210 +462,490 @@ const CartPage = () => {
         </div>
       </header>
 
-      <motion.main className="max-w-5xl mx-auto px-6 pt-24 pb-36 w-full flex-1 overflow-y-auto hide-scrollbar">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-12 space-y-10">
-            <div className="pl-4 border-l-4 border-primary">
-              <h2 className="font-headline text-3xl font-black tracking-tighter leading-none mb-1 text-slate-900">Review Items</h2>
-              <p className="text-on-surface-variant text-xs font-bold uppercase tracking-widest opacity-60">{cartItems.length} services added.</p>
-            </div>
-
-            <div className="space-y-4">
-              {loading ? (
-                <div className="py-20 flex flex-col items-center justify-center bg-white rounded-[2.5rem] border border-outline-variant/10 shadow-sm animate-pulse">
-                   <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">Syncing...</p>
+      {/* Booking Preview Modal */}
+      <AnimatePresence>
+        {showPreview && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex flex-col gap-1">
+                  <h3 className="font-headline font-black text-2xl text-slate-900 uppercase tracking-tighter">Booking Preview.</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verify your details before payment</p>
                 </div>
-              ) : cartItems.length > 0 ? (
-                cartItems.map((item) => (
-                  <motion.div key={item._id || item.id} className="bg-white rounded-3xl p-5 md:p-6 flex items-center justify-between shadow-sm border border-outline-variant/10 group">
-                    <div className="flex items-center gap-5">
-                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined text-3xl">{item.icon || 'local_laundry_service'}</span></div>
-                      <div>
-                        <h3 className="font-headline font-black text-[15px] md:text-lg text-on-surface leading-tight text-slate-900">{item.name}</h3>
+                <button onClick={() => setShowPreview(false)} className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-slate-400 shadow-sm hover:text-rose-500 transition-all">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-8 space-y-8 hide-scrollbar">
+                <div className="space-y-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">Services & Items</p>
+                  <div className="space-y-3">
+                    {cartItems.map(item => (
+                      <div key={item._id || item.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-slate-400">check_circle</span>
+                          <span className="font-bold text-sm text-slate-900">{item.name} × {quantities[item._id || item.id]}</span>
+                        </div>
+                        <span className="font-black text-slate-900">₹{getItemPrice(item) * quantities[item._id || item.id]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Pickup Address</p>
+                    <p className="text-xs font-bold text-slate-900 leading-relaxed">{selectedPickupAddress?.address}</p>
+                  </div>
+                  <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Scheduling</p>
+                    <p className="text-xs font-bold text-slate-900">Pickup: {selectedPickup}</p>
+                    <p className="text-xs font-bold text-slate-900 mt-1">Delivery: {selectedDelivery}</p>
+                  </div>
+                </div>
+
+                <div className="bg-black rounded-[2.5rem] p-8 text-white space-y-4 shadow-xl">
+                  <div className="flex justify-between text-xs font-black uppercase tracking-widest text-white/40">
+                    <span>Grand Total</span>
+                    <span className="text-white">₹{finalTotal.toFixed(0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-4 border-t border-white/10">
+                    <div className="flex flex-col">
+                      <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Pay Now (Advance)</p>
+                      <p className="text-4xl font-black text-white tracking-tighter">₹{(finalTotal * 0.05).toFixed(0)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Pay After Delivery</p>
+                      <p className="text-2xl font-black text-white/60 tracking-tighter">₹{(finalTotal * 0.95).toFixed(0)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-slate-100">
+                <button 
+                  onClick={finalSubmitOrder}
+                  disabled={loading}
+                  className={`w-full py-6 rounded-[1.5rem] bg-black text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all hover:bg-emerald-500 flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {loading ? 'PROCESSING...' : 'PROCEED TO PAYMENT'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.main className="max-w-5xl mx-auto px-6 pt-24 pb-36 w-full flex-1 overflow-y-auto hide-scrollbar">
+        <div className="flex flex-col gap-10">
+          
+          {/* 1. Item Summary Detail - TOP */}
+          <div className="pl-4 border-l-4 border-black">
+            <h2 className="font-headline text-3xl font-black tracking-tighter leading-none mb-1 text-slate-900 uppercase">Your Summary.</h2>
+            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{cartItems.length} services selected</p>
+          </div>
+
+          <div className="space-y-4">
+            {cartItems.map((item) => {
+              const itemId = item._id || item.id;
+              const qty = quantities[itemId];
+              const unitPrice = getItemPrice(item);
+              const totalPrice = unitPrice * qty;
+              const isHeritageService = item.tier === 'Heritage' || (item.basePrice > 200);
+
+              return (
+                <div key={itemId} className="bg-white rounded-[2.5rem] p-6 flex items-center gap-5 border border-slate-100 shadow-sm relative overflow-hidden group">
+                  {/* Icon Box */}
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-slate-50 flex items-center justify-center text-slate-900 border border-slate-100 shrink-0">
+                    <span className="material-symbols-outlined text-2xl">{item.icon || 'local_laundry_service'}</span>
+                  </div>
+
+                  {/* Content Area */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-4">
+                      <h3 className="font-black text-lg text-slate-900 uppercase tracking-tight leading-none">{item.name}</h3>
+                      <span className="text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-slate-100 text-slate-400">
+                        {isHeritageService ? 'Heritage' : 'Essential'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-8">
+                      {/* NEW PILL-STYLE QTY CONTROL - MATCHING IMAGE */}
+                      <div className="bg-slate-50 rounded-[2rem] px-2 py-1.5 flex items-center gap-4 border border-slate-100/50 shadow-inner">
+                        <button 
+                          onClick={() => updateQuantity(itemId, -1)}
+                          className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
+                        >
+                          <span className="material-symbols-outlined text-xl font-black">remove</span>
+                        </button>
                         
-                        {/* Delivery Time Badge */}
-                        <div className="flex items-center gap-1.5 mt-1">
-                            <span className="material-symbols-outlined text-[14px] text-slate-400">schedule</span>
-                            <span className={`text-[10px] font-black uppercase tracking-widest ${isExpress ? 'text-amber-600' : 'text-slate-500'}`}>
-                                {isExpress ? (item.expressTime || '24h Delivery') : (item.normalTime || '2-3 Days')}
-                            </span>
+                        <div className="flex flex-col items-center min-w-[40px]">
+                          <span className="text-xs font-black text-slate-900 leading-none">{qty}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1">Per {billingUnits[itemId] || 'Kg'}</span>
                         </div>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-4">
-                          <div className="flex items-center bg-surface-container-low rounded-2xl p-1 w-fit border border-outline-variant/5">
-                            <button onClick={() => updateQuantity(item._id || item.id, -1)} className="w-8 h-8 flex items-center justify-center text-primary bg-white rounded-xl shadow-xs"><span className="material-symbols-outlined text-sm font-bold">remove</span></button>
-                            <span className="font-black text-on-surface px-4 text-sm">{quantities[item._id || item.id] || 0} {billingUnits[item._id || item.id]}</span>
-                            <button onClick={() => updateQuantity(item._id || item.id, 1)} className="w-8 h-8 flex items-center justify-center text-primary bg-white rounded-xl shadow-xs"><span className="material-symbols-outlined text-sm font-bold">add</span></button>
-                          </div>
+                        <button 
+                          onClick={() => updateQuantity(itemId, 1)}
+                          className="w-10 h-10 flex items-center justify-center bg-white rounded-full text-slate-400 shadow-sm hover:text-black transition-all active:scale-90"
+                        >
+                          <span className="material-symbols-outlined text-xl font-black">add</span>
+                        </button>
+                      </div>
+
+                      {/* Pricing Section - MATCHING IMAGE */}
+                      <div className="flex items-center gap-8">
+                        <div className="flex flex-col">
+                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Price/Unit</p>
+                          <p className="text-lg font-black text-slate-900 mt-1 tracking-tighter">₹{unitPrice}</p>
+                        </div>
+                        <div className="flex flex-col">
+                          <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">Total</p>
+                          <p className="text-2xl font-black text-slate-900 mt-1 tracking-tighter">₹{totalPrice.toFixed(0)}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right"><span className="font-headline font-black text-lg text-primary">₹{(getItemPrice(item) * (quantities[item._id || item.id] || 0)).toFixed(2)}</span></div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100"><p className="text-sm font-black text-slate-400 uppercase tracking-widest">Cart is Empty</p></div>
-              )}
+                  </div>
+
+                  {/* Circular Remove Button - TOP RIGHT */}
+                  <button 
+                    onClick={() => updateQuantity(itemId, -qty)}
+                    className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 hover:bg-rose-50 hover:text-rose-500 transition-all shadow-sm"
+                  >
+                    <span className="material-symbols-outlined text-xl font-black">close</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. Premium Delivery Selection Section - FROM IMAGE */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl overflow-hidden">
+            {/* Tabs Header */}
+            <div className="bg-slate-50 p-2 flex border-b border-slate-100">
+              <button 
+                className="flex-1 py-3.5 rounded-2xl text-[11px] font-black tracking-tight bg-black text-white shadow-lg"
+              >
+                Delivery Type
+              </button>
             </div>
 
-            {applicablePromos.length > 0 && (
-                <div className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary px-4">Discover Offers</h3>
-                    <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
-                        {applicablePromos.map(promo => (
-                            <motion.div key={promo._id} onClick={() => handleApplyPromo(promo.code)} className={`min-w-[280px] p-6 rounded-[2.5rem] border-2 cursor-pointer transition-all ${appliedPromoData?._id === promo._id ? 'bg-primary border-primary text-white' : 'bg-white border-slate-100 shadow-sm'}`}>
-                                <h4 className={`text-lg font-black tracking-tighter mb-1 ${appliedPromoData?._id === promo._id ? 'text-white' : 'text-slate-900'}`}>{promo.title}</h4>
-                                <div className={`mt-4 px-4 py-2 rounded-xl text-center border ${appliedPromoData?._id === promo._id ? 'bg-white/10 border-white/20' : 'bg-slate-50 border-slate-200'}`}><span className="text-xs font-black">{promo.code}</span></div>
-                            </motion.div>
-                        ))}
+            {/* Delivery Options */}
+            <div className="divide-y divide-slate-100">
+              {/* Express Option */}
+              <div 
+                onClick={() => setIsExpress(true)}
+                className={`p-6 flex items-center justify-between cursor-pointer transition-all ${isExpress ? 'bg-amber-50/30' : 'hover:bg-slate-50/50'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isExpress ? 'border-amber-500' : 'border-slate-200'}`}>
+                    {isExpress && <div className="w-3 h-3 rounded-full bg-amber-500" />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className={`font-black text-sm ${isExpress ? 'text-amber-600' : 'text-slate-900'}`}>Express ⚡</h4>
+                      <div className="h-4 w-px bg-slate-200" />
+                      <span className="text-slate-400 line-through text-[10px]">₹{expressChargeConfig + 20}</span>
+                      <span className="text-slate-900 font-black text-xs">₹{expressChargeConfig}</span>
                     </div>
+                    <p className="text-[11px] font-medium text-slate-400 mt-1">Fastest delivery, directly to you!</p>
+                  </div>
                 </div>
-            )}
-
-            <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">schedule</span>Fulfillment</h3>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                    <div 
-                      onClick={() => setIsExpress(false)}
-                      className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${!isExpress ? 'bg-primary border-primary text-white shadow-lg' : 'bg-slate-50 border-transparent text-slate-900 hover:bg-slate-100'}`}
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="material-symbols-outlined">local_shipping</span>
-                            {!isExpress && <span className="material-symbols-outlined">check_circle</span>}
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Standard</p>
-                        <p className="text-sm font-black">Normal Speed</p>
-                        <p className="text-[10px] font-bold mt-2 opacity-60">₹{normalLogisticsConfig} Delivery</p>
-                    </div>
-
-                    <div 
-                      onClick={() => setIsExpress(true)}
-                      className={`p-6 rounded-[2rem] border-2 cursor-pointer transition-all ${isExpress ? 'bg-amber-500 border-amber-500 text-white shadow-lg' : 'bg-slate-50 border-transparent text-slate-900 hover:bg-slate-100'}`}
-                    >
-                        <div className="flex justify-between items-start mb-4">
-                            <span className="material-symbols-outlined">zap</span>
-                            {isExpress && <span className="material-symbols-outlined">check_circle</span>}
-                        </div>
-                        <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Express</p>
-                        <p className="text-sm font-black">24h Priority</p>
-                        <p className="text-[10px] font-bold mt-2 opacity-60">+ ₹{expressChargeConfig} Surcharge</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div onClick={() => { setActivePicking('pickup'); setShowPicker(true); }} className="bg-primary/5 p-6 rounded-[2rem] border-2 border-primary/20 cursor-pointer"><p className="text-[9px] font-black text-primary uppercase mb-1">Pickup</p><p className="text-lg font-black text-slate-900">{selectedPickup}</p></div>
-                    <div onClick={() => { setActivePicking('delivery'); setShowPicker(true); }} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-transparent cursor-pointer"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Delivery</p><p className="text-lg font-black text-slate-900">{selectedDelivery}</p></div>
-                </div>
-            </div>
-
-            <div className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-headline font-black text-2xl flex items-center gap-3 text-slate-900"><span className="material-symbols-outlined text-primary text-3xl">location_on</span>Locale</h3>
-                    <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Diff. Drop?</span>
-                        <div 
-                          onClick={() => setIsSameAddress(!isSameAddress)}
-                          className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${!isSameAddress ? 'bg-primary' : 'bg-slate-200'}`}
-                        >
-                            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${!isSameAddress ? 'left-7' : 'left-1'}`} />
-                        </div>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    {/* Pickup Section */}
-                    <div className="space-y-3">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">1. Collection Point</p>
-                        <div onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }} className="bg-primary/5 p-6 rounded-[2rem] border-2 border-primary/20 cursor-pointer hover:bg-white transition-all shadow-sm">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-primary shadow-sm"><span className="material-symbols-outlined">directions_run</span></div>
-                                <div className="flex-1 overflow-hidden">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-[11px] font-black text-primary uppercase tracking-widest mb-0.5">Pickup From</p>
-                                        {localStorage.getItem('address_is_full') === 'false' && (
-                                            <span className="bg-rose-500 text-white text-[7px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest animate-pulse">Incomplete</span>
-                                        )}
-                                    </div>
-                                    <p className={`text-sm font-bold truncate ${localStorage.getItem('address_is_full') === 'false' ? 'text-rose-600 italic' : 'text-slate-900'}`}>
-                                        {selectedPickupAddress?.address || 'Select Pickup Location'}
-                                        {localStorage.getItem('address_is_full') === 'false' && " (Add House No. / Street)"}
-                                    </p>
-                                </div>
-                                <span className="material-symbols-outlined text-primary/40">chevron_right</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Drop Section (Conditional) */}
-                    {!isSameAddress && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="space-y-3"
-                        >
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 italic">2. Final Destination</p>
-                            <div onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }} className="bg-slate-50 p-6 rounded-[2rem] border-2 border-slate-100 cursor-pointer hover:bg-white transition-all">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 shadow-sm"><span className="material-symbols-outlined">local_shipping</span></div>
-                                    <div className="flex-1 overflow-hidden">
-                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Drop To</p>
-                                        <p className="text-sm font-bold text-slate-900 truncate">{selectedDropAddress?.address || 'Select Drop Location'}</p>
-                                    </div>
-                                    <span className="material-symbols-outlined text-slate-300">chevron_right</span>
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {isSameAddress && (
-                        <div className="flex items-center gap-2 px-6 py-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                             <span className="material-symbols-outlined text-emerald-500 text-sm">verified</span>
-                             <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest">Laundry will be dropped at pickup location</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
-              <h3 className="font-headline font-black text-2xl mb-8 text-white">Summary</h3>
-              <div className="space-y-6">
-                <div className="flex justify-between text-sm"><span className="text-white/60 font-black">Cart Subtotal</span><span className="font-black text-white">₹{subtotal.toFixed(2)}</span></div>
-                
-                <div className="flex justify-between text-sm">
-                    <span className="text-white/60 font-black">Delivery (Normal)</span>
-                    <span className="font-black text-white">₹{normalLogisticsConfig.toFixed(2)}</span>
-                </div>
-
-                {isExpress && (
-                    <div className="flex justify-between text-sm text-amber-400">
-                        <span className="font-black">Express Fulfillment</span>
-                        <span className="font-black">+ ₹{expressChargeConfig.toFixed(2)}</span>
-                    </div>
-                )}
-                
-                <div className="h-px bg-white/10 my-6"></div>
-                
-                {isPromoApplied && (
-                    <div className="flex justify-between text-sm text-emerald-400 mb-6 font-black uppercase tracking-widest">
-                        <span>Reward Applied</span>
-                        <span>- ₹{discount.toFixed(2)}</span>
-                    </div>
-                )}
-
-                <div className="flex justify-between items-end">
-                    <div>
-                        <p className="text-[10px] font-black text-white/40 mb-2 uppercase tracking-widest">Grand Total</p>
-                        <p className="text-5xl font-black text-white tracking-tighter">₹{finalTotal.toFixed(2)}</p>
-                    </div>
+                <div className="text-right">
+                  <span className={`text-xs font-black ${isExpress ? 'text-amber-600' : 'text-slate-400'}`}>35-40 mins</span>
                 </div>
               </div>
-              <button onClick={handlePlaceOrder} className="w-full mt-12 bg-primary text-on-primary font-headline font-black py-6 rounded-2xl text-lg uppercase shadow-2xl active:scale-95 transition-all">Launch Fresh Flow</button>
+
+              {/* Standard Option (Normal) */}
+              <div 
+                onClick={() => setIsExpress(false)}
+                className={`p-6 flex items-center justify-between cursor-pointer transition-all ${!isExpress ? 'bg-slate-50/50' : 'hover:bg-slate-50/30'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${!isExpress ? 'border-black' : 'border-slate-200'}`}>
+                    {!isExpress && <div className="w-3 h-3 rounded-full bg-black" />}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900">Normal (Standard)</h4>
+                    <p className="text-[11px] font-medium text-slate-400 mt-1">Minimal order grouping</p>
+                    <p className="text-[10px] font-black text-slate-900 mt-1">₹{normalLogisticsConfig}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className={`text-xs font-black ${!isExpress ? 'text-slate-900' : 'text-slate-400'}`}>40-45 mins</span>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* 3. Address Management Section - NEW */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
+                  <span className="material-symbols-outlined text-black">location_on</span>Address Details.
+                </h3>
+              </div>
+
+              {/* Pickup Address Box */}
+              <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-900 shadow-sm shrink-0">
+                    <span className="material-symbols-outlined text-xl">directions_run</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Pickup Address</p>
+                    <p className="text-sm font-bold text-slate-900 truncate">
+                      {selectedPickupAddress?.address || 'No address selected'}
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { setActiveAddressType('pickup'); setShowAddressPicker(true); }}
+                  className="px-5 py-2 bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/20 hover:scale-105 transition-all shrink-0"
+                >
+                  Change
+                </button>
+              </div>
+
+              {/* Drop Address Option */}
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between px-2">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-slate-400 text-lg">local_shipping</span>
+                    <p className="text-xs font-black text-slate-600 uppercase tracking-tight">Drop to different location?</p>
+                  </div>
+                  <div 
+                    onClick={() => setIsSameAddress(!isSameAddress)}
+                    className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${!isSameAddress ? 'bg-black' : 'bg-slate-200'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${!isSameAddress ? 'left-7' : 'left-1'}`} />
+                  </div>
+                </div>
+
+                {!isSameAddress && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-4 min-w-0">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm shrink-0">
+                        <span className="material-symbols-outlined text-xl">location_home</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Drop Address</p>
+                        <p className="text-sm font-bold text-slate-900 truncate">
+                          {selectedDropAddress?.address || 'Select Drop Location'}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => { setActiveAddressType('drop'); setShowAddressPicker(true); }}
+                      className="px-5 py-2 bg-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all shrink-0"
+                    >
+                      Set
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Pickup & Delivery Slots Section - NEW */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
+                <span className="material-symbols-outlined text-black">schedule</span>Slots Selection.
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Pickup Slot Card */}
+              <div 
+                onClick={() => { setActivePicking('pickup'); setShowPicker(true); }}
+                className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 cursor-pointer hover:bg-white transition-all group"
+              >
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">Pickup</p>
+                <div className="flex flex-col">
+                  <p className="text-sm font-black text-slate-900">{selectedPickup}</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{pickupTime}</p>
+                </div>
+              </div>
+
+              {/* Delivery Slot Card */}
+              <div 
+                onClick={() => { setActivePicking('delivery'); setShowPicker(true); }}
+                className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 cursor-pointer hover:bg-white transition-all group"
+              >
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 group-hover:text-black transition-colors">Delivery</p>
+                <div className="flex flex-col">
+                  <p className="text-sm font-black text-slate-900">{selectedDelivery}</p>
+                  <p className="text-[11px] font-bold text-slate-500 mt-1">{deliveryTime}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Pre Pickup Photo Upload - NEW */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-headline font-black text-xl flex items-center gap-3 text-slate-900 uppercase tracking-tighter">
+                <span className="material-symbols-outlined text-black">photo_camera</span>Pre Pickup Photo.
+              </h3>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Optional record for your safety</p>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                ref={fileInputRef}
+                onChange={handlePhotoUpload}
+                className="hidden" 
+              />
+              <button 
+                onClick={() => fileInputRef.current.click()}
+                className="w-full py-5 rounded-[1.5rem] border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center gap-3 hover:bg-white hover:border-black transition-all group"
+              >
+                <span className="material-symbols-outlined text-slate-400 group-hover:text-black">add_a_photo</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400 group-hover:text-black">Upload Garment Photos 📷</span>
+              </button>
+
+              {/* Photos Preview */}
+              {garmentPhotos.length > 0 && (
+                <div className="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                  {garmentPhotos.map((url, i) => (
+                    <div key={i} className="relative shrink-0">
+                      <img src={url} alt="Garment" className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shadow-sm" />
+                      <button 
+                        onClick={() => setGarmentPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-black text-white rounded-full flex items-center justify-center shadow-lg"
+                      >
+                        <span className="material-symbols-outlined text-[10px] font-black">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 6. Promo Code Selection */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Promo Code</h3>
+            <div className="flex gap-3">
+              <input 
+                type="text" 
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="ENTER COUPON CODE" 
+                className="flex-1 bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black placeholder:text-slate-300 focus:ring-2 focus:ring-black transition-all"
+              />
+              <button 
+                onClick={() => handleApplyPromo()}
+                className="px-8 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-black/20"
+              >
+                Apply
+              </button>
+            </div>
+            {promoError && <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-4">{promoError}</p>}
+            {isPromoApplied && <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4">Coupon Applied Successfully!</p>}
+          </div>
+
+          {/* 7. Notes / Instructions Section */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Notes / Instructions</h3>
+            <textarea 
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              placeholder="Any special requests? (e.g. Wash separately, Use mild detergent)"
+              className="w-full bg-slate-50 border-none rounded-3xl px-6 py-5 text-sm font-bold placeholder:text-slate-300 focus:ring-2 focus:ring-black transition-all min-h-[120px] resize-none"
+            />
+          </div>
+
+          {/* 8. Payment Info Logic */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 space-y-6">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Payment Info</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100 flex flex-col gap-2">
+                <span className="material-symbols-outlined text-emerald-500">payments</span>
+                <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest leading-none">Pay 5% Now</p>
+                <p className="text-xs font-bold text-emerald-600">Secure booking deposit</p>
+              </div>
+              <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex flex-col gap-2">
+                <span className="material-symbols-outlined text-slate-400">handshake</span>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Rest After Delivery</p>
+                <p className="text-xs font-bold text-slate-400">Pay remaining 95% later</p>
+              </div>
+            </div>
+          </div>
+
+          {/* 9. Price Breakdown & Final Action */}
+          <div className="bg-black rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col gap-1 mb-8">
+              <h3 className="font-headline font-black text-2xl text-white uppercase tracking-tighter">Price Breakdown.</h3>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Clear pricing transparency</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between text-sm font-black uppercase tracking-widest text-white/60">
+                <span>Items Total</span>
+                <span className="text-white">₹{subtotal.toFixed(0)}</span>
+              </div>
+              
+              <div className="flex justify-between text-sm font-black uppercase tracking-widest text-white/60">
+                <span>Delivery Fee</span>
+                <span className="text-white">₹{normalLogisticsConfig.toFixed(0)}</span>
+              </div>
+
+              {isExpress && (
+                <div className="flex justify-between text-sm font-black uppercase tracking-widest text-amber-400">
+                  <span>Express Fee</span>
+                  <span>₹{expressChargeConfig.toFixed(0)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-sm font-black uppercase tracking-widest text-white/60">
+                <span>Taxes (GST)</span>
+                <span className="text-white">₹{(grandTotal * 0.05).toFixed(0)}</span> {/* 5% tax example */}
+              </div>
+
+              <div className="h-px bg-white/10 my-4"></div>
+
+              <div className="flex justify-between items-center py-2">
+                <div className="flex flex-col">
+                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest mb-1">Advance Payable (5%)</p>
+                  <p className="text-3xl font-black text-white tracking-tighter">₹{(finalTotal * 0.05).toFixed(0)}</p>
+                </div>
+                <div className="text-right flex flex-col">
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Remaining After Delivery</p>
+                  <p className="text-xl font-black text-white/60 tracking-tighter line-through">₹{(finalTotal * 0.95).toFixed(0)}</p>
+                  <p className="text-2xl font-black text-white tracking-tighter mt-1">₹{(finalTotal * 0.95).toFixed(0)}</p>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handlePlaceOrder} 
+              className="w-full mt-10 bg-white text-black font-black py-6 rounded-[1.5rem] text-sm uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all hover:bg-amber-400 hover:text-black transition-colors"
+            >
+              Confirm Booking
+            </button>
+          </div>
+
         </div>
       </motion.main>
 
