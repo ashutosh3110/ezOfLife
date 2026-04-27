@@ -121,6 +121,15 @@ const OtpVerificationPage = () => {
       variants={containerVariants}
       className="bg-background text-on-background min-h-[100dvh] flex flex-col items-center justify-center px-6 relative overflow-hidden"
     >
+      {/* Refresh Button */}
+      <motion.button 
+        whileTap={{ scale: 0.9 }}
+        onClick={() => window.location.reload()}
+        className="absolute top-6 right-6 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl border border-white/20 text-slate-400 hover:text-slate-900 transition-all z-[60]"
+      >
+        <span className="material-symbols-outlined text-[20px]">refresh</span>
+      </motion.button>
+
       {/* Decorative Background */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
         <div className="absolute top-20 right-[-10%] w-80 h-80 bg-primary/5 rounded-full blur-[80px]" />

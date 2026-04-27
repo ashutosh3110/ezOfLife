@@ -57,7 +57,16 @@ const AuthPage = () => {
   ], []);
 
   return (
-    <div className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden">
+    <div className="bg-background font-body text-on-background min-h-[100dvh] flex flex-col overflow-x-hidden relative">
+      {/* Refresh Button */}
+      <motion.button 
+        whileTap={{ scale: 0.9 }}
+        onClick={() => window.location.reload()}
+        className="absolute top-6 right-6 w-10 h-10 bg-white/80 backdrop-blur-md rounded-full flex items-center justify-center shadow-xl border border-white/20 text-slate-400 hover:text-slate-900 transition-all z-[60]"
+      >
+        <span className="material-symbols-outlined text-[20px]">refresh</span>
+      </motion.button>
+
       {/* Hero Visual Section */}
       <div className="relative h-[25dvh] min-h-[220px] w-full overflow-hidden flex items-center justify-center">
         <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary-container/30 rounded-full blur-[80px]"></div>
